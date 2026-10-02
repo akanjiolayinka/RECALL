@@ -22,7 +22,30 @@ export interface ApiError {
   message: string;
 }
 
+/** A folder the user has added for Recall to index. */
+export interface Location {
+  id: string;
+  /** Folder name for display, e.g. "Documents". */
+  name: string;
+  /** Full absolute path on this computer. */
+  path: string;
+}
+
+export interface AddLocationResult {
+  location: Location;
+  /** Previously added folders inside the new one, merged into it. */
+  replaced: Location[];
+}
+
 /** The operations the frontend can ask the backend to perform. */
 export interface RecallApi {
   getAppInfo(): Promise<AppInfo>;
+  /**
+   * Opens the system folder picker and adds the chosen folder.
+   * Resolves to `null` if the user cancels the picker.
+   */
+  addLocation(): Promise<AddLocationResult | null>;
+  listLocations(): Promise<Location[]>;
+  /** Removes a folder from the library. Never deletes or changes the files. */
+  removeLocation(id: string): Promise<void>;
 }

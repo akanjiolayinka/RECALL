@@ -19,3 +19,4 @@ export const isMockMode = import.meta.env.DEV && import.meta.env.VITE_RECALL_MOC
 export const api: RecallApi = isMockMode ? mockApi : tauriApi;
 
 export type * from "./types";
+export { errorMessage } from "./errors";

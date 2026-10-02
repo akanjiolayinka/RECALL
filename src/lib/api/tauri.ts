@@ -1,6 +1,6 @@
 import { invoke, isTauri } from "@tauri-apps/api/core";
 
-import type { ApiError, AppInfo, RecallApi } from "./types";
+import type { AddLocationResult, ApiError, AppInfo, Location, RecallApi } from "./types";
 
 /** Convert whatever a Tauri command rejected with into our ApiError shape. */
 function toApiError(err: unknown): ApiError {
@@ -29,4 +29,7 @@ async function call<T>(command: string, args?: Record<string, unknown>): Promise
 /** The real API, backed by Rust commands registered in src-tauri/src/lib.rs. */
 export const tauriApi: RecallApi = {
   getAppInfo: () => call<AppInfo>("get_app_info"),
+  addLocation: () => call<AddLocationResult | null>("add_location"),
+  listLocations: () => call<Location[]>("list_locations"),
+  removeLocation: (id) => call<void>("remove_location", { id }),
 };
