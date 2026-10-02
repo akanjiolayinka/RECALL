@@ -6,3 +6,4 @@
 //! The contract is documented in docs/API.md.
 
 pub mod app;
+pub mod locations;
