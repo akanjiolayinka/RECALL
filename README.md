@@ -1,4 +1,4 @@
-This project was submitted to the ryze.ai hackathon by [NAME OF SUBMITTER].
+This project was submitted to the ryze.ai hackathon by Olayinka Akanji.
 
 # Recall
 
