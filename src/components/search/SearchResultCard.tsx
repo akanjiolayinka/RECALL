@@ -19,10 +19,10 @@ function relevanceLabel(relevance: number): string {
 
 interface SearchResultCardProps {
   result: SearchResult;
-  onViewText: (result: SearchResult) => void;
+  onShowSource: (result: SearchResult) => void;
 }
 
-export function SearchResultCard({ result, onViewText }: SearchResultCardProps) {
+export function SearchResultCard({ result, onShowSource }: SearchResultCardProps) {
   const openFile = useOpenFile();
 
   return (
@@ -72,10 +72,12 @@ export function SearchResultCard({ result, onViewText }: SearchResultCardProps) 
           </span>
         ))}
         <div className="ml-auto flex gap-1">
-          <Button variant="ghost" size="sm" onClick={() => onViewText(result)}>
-            <BookOpen aria-hidden />
-            View text
-          </Button>
+          {result.passageId && (
+            <Button variant="ghost" size="sm" onClick={() => onShowSource(result)}>
+              <BookOpen aria-hidden />
+              Show source
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={() => openFile.mutate(result.fileId)} disabled={openFile.isPending}>
             <ExternalLink aria-hidden />
             Open

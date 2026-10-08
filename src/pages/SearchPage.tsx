@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { FolderPlus, Info, Search, SearchX } from "lucide-react";
 
-import { DocumentViewer, type ViewerFile } from "@/components/evidence/DocumentViewer";
+import { EvidenceViewer } from "@/components/evidence/EvidenceViewer";
 import { SearchResultCard } from "@/components/search/SearchResultCard";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -9,7 +9,7 @@ import { ErrorMessage } from "@/components/ui/error-message";
 import { Input } from "@/components/ui/input";
 import { useLocations } from "@/hooks/useLocations";
 import { useSearch, useSearchCapabilities } from "@/hooks/useSearch";
-import { errorMessage } from "@/lib/api/client";
+import { errorMessage, type SearchResult } from "@/lib/api/client";
 import { plural } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -23,7 +23,7 @@ const SUGGESTED_SEARCHES = [
 export function SearchPage() {
   const [text, setText] = useState("");
   const [query, setQuery] = useState("");
-  const [viewing, setViewing] = useState<ViewerFile | null>(null);
+  const [evidenceFor, setEvidenceFor] = useState<SearchResult | null>(null);
   const results = useSearch(query);
   const capabilities = useSearchCapabilities();
   const semanticOff = capabilities.data && !capabilities.data.semanticSearch;
@@ -117,11 +117,7 @@ export function SearchPage() {
           <section aria-label="Search results" className={cn("flex flex-col gap-3", results.isPlaceholderData && "opacity-60")}>
             <p className="text-xs text-muted-foreground">{plural(results.data.length, "matching file")}</p>
             {results.data.map((result) => (
-              <SearchResultCard
-                key={result.id}
-                result={result}
-                onViewText={(r) => setViewing({ id: r.fileId, name: r.fileName, path: r.filePath })}
-              />
+              <SearchResultCard key={result.id} result={result} onShowSource={setEvidenceFor} />
             ))}
           </section>
         )
@@ -129,7 +125,7 @@ export function SearchPage() {
         <p className="text-sm text-muted-foreground">Searching…</p>
       ) : null}
 
-      <DocumentViewer file={viewing} onClose={() => setViewing(null)} />
+      <EvidenceViewer result={evidenceFor} onClose={() => setEvidenceFor(null)} />
     </div>
   );
 }

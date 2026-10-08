@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use tauri::State;
 use tauri_plugin_opener::OpenerExt;
 
+use crate::database::evidence::Evidence;
 use crate::database::{self, Database};
 use crate::embeddings::EmbeddingModel;
 use crate::error::{parse_id, ApiError};
@@ -34,6 +35,8 @@ pub struct SearchResultDto {
     /// Unique per result: the passage id, or the file id when only the file
     /// name matched.
     pub id: String,
+    /// The matching passage, for `get_evidence`; `None` for name-only matches.
+    pub passage_id: Option<String>,
     pub file_id: String,
     pub file_name: String,
     pub file_path: String,
@@ -48,6 +51,7 @@ pub struct SearchResultDto {
 
 impl From<SearchResult> for SearchResultDto {
     fn from(result: SearchResult) -> Self {
+        let passage_id = result.passage.as_ref().map(|p| p.chunk_id.to_string());
         let (id, page, snippet) = match result.passage {
             Some(passage) => (
                 format!("chunk-{}", passage.chunk_id),
@@ -62,6 +66,7 @@ impl From<SearchResult> for SearchResultDto {
         };
         Self {
             id,
+            passage_id,
             file_id: result.file_id.to_string(),
             file_name: result
                 .path
@@ -145,4 +150,54 @@ pub fn get_search_capabilities(model: State<'_, EmbeddingModel>) -> SearchCapabi
         embedding_model: model.embedder.as_ref().map(|e| e.model_id().to_string()),
         semantic_unavailable_reason: model.unavailable_reason.clone(),
     }
+}
+
+/// A passage shown in the context of its page. Mirrors `Evidence` in
+/// src/lib/api/types.ts.
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EvidenceDto {
+    pub file_id: String,
+    pub file_name: String,
+    pub file_path: String,
+    pub file_kind: FileKind,
+    pub page: Option<u32>,
+    /// Page text before the passage.
+    pub before: String,
+    pub passage: String,
+    /// Page text after the passage.
+    pub after: String,
+}
+
+impl From<Evidence> for EvidenceDto {
+    fn from(evidence: Evidence) -> Self {
+        Self {
+            file_id: evidence.file_id.to_string(),
+            file_name: evidence
+                .path
+                .file_name()
+                .map(|name| name.to_string_lossy().into_owned())
+                .unwrap_or_default(),
+            file_path: evidence.path.to_string_lossy().into_owned(),
+            file_kind: evidence.kind,
+            page: evidence.page_number,
+            before: evidence.before,
+            passage: evidence.passage,
+            after: evidence.after,
+        }
+    }
+}
+
+/// The stored text supporting a search result. Returns `None` when the
+/// passage no longer exists or can't be located reliably (e.g. the file was
+/// re-indexed since the search); the UI then says so instead of guessing.
+#[tauri::command]
+pub fn get_evidence(
+    passage_id: String,
+    db: State<'_, Database>,
+) -> Result<Option<EvidenceDto>, ApiError> {
+    let Ok(id) = passage_id.parse::<i64>() else {
+        return Ok(None);
+    };
+    Ok(database::evidence::get(&db.connect()?, id)?.map(EvidenceDto::from))
 }

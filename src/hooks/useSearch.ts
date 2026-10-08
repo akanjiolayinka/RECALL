@@ -26,3 +26,12 @@ export function useSearchCapabilities() {
     staleTime: Infinity,
   });
 }
+
+/** The stored text supporting a result. Pass null to load nothing. */
+export function useEvidence(passageId: string | null) {
+  return useQuery({
+    queryKey: ["evidence", passageId],
+    queryFn: () => api.getEvidence(passageId!),
+    enabled: passageId !== null,
+  });
+}
