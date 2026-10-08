@@ -29,6 +29,7 @@ thiserror = "2.0.21"
 dunce = "1.0.5"
 walkdir = "2.5.0"
 sha2 = "0.11.0"
+rusqlite = { version = "0.40.2", features = ["bundled"] }
 
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
@@ -48,4 +49,9 @@ tempfile = "3.27.0"
 opt-level = 3
 
 [profile.dev.package.digest]
+opt-level = 3
+
+# SQLite is C code compiled by libsqlite3-sys; unoptimised it makes the first
+# scan of a large folder noticeably slow in `tauri dev` builds.
+[profile.dev.package.libsqlite3-sys]
 opt-level = 3

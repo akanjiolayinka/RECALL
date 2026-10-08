@@ -27,7 +27,7 @@ export function LocationList({ locations, onRemove, onRescan, removingId }: Loca
                 {location.path}
               </p>
             </div>
-            <ScanProgress scan={location.scan} className="max-w-sm" />
+            <ScanProgress scan={location.scan} fileCount={location.fileCount} className="max-w-sm" />
           </div>
           <div className="flex shrink-0 gap-1">
             <Button
@@ -35,7 +35,7 @@ export function LocationList({ locations, onRemove, onRescan, removingId }: Loca
               size="sm"
               onClick={() => onRescan(location)}
               disabled={isScanning(location.scan)}
-              aria-label={`Scan ${location.name} again`}
+              aria-label={`Check ${location.name} again for changes`}
             >
               <RotateCw aria-hidden />
               Rescan

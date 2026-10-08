@@ -19,3 +19,20 @@ impl ApiError {
         }
     }
 }
+
+impl From<rusqlite::Error> for ApiError {
+    /// Database errors are technical; log the detail and show a plain message.
+    fn from(err: rusqlite::Error) -> Self {
+        eprintln!("recall: database error: {err}");
+        ApiError::new(
+            "database_error",
+            "Recall couldn't read or update its index. Please try again; if this keeps happening, restart Recall.",
+        )
+    }
+}
+
+/// Parse an id received from the frontend. Ids are opaque strings in the API.
+pub fn parse_id(id: &str, not_found_code: &'static str, message: &str) -> Result<i64, ApiError> {
+    id.parse()
+        .map_err(|_| ApiError::new(not_found_code, message))
+}

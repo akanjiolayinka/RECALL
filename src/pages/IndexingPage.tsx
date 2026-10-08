@@ -41,7 +41,7 @@ function LocationProgress({ location }: { location: Location }) {
       ) : (
         <>
           <Progress value={percent} label={`Progress for ${location.name}`} />
-          <p className="text-sm">{describeScan(scan)}</p>
+          <p className="text-sm">{describeScan(scan, location.fileCount)}</p>
           {isScanning(scan) && scan?.currentFile && (
             <p className="truncate text-xs text-muted-foreground">Now: {scan.currentFile}</p>
           )}
@@ -83,8 +83,9 @@ export function IndexingPage() {
             ))}
           </ul>
           <p className="text-xs text-muted-foreground">
-            Right now Recall finds supported files and fingerprints them so it can spot changes later.
-            Reading the text inside files arrives in Milestone 5.
+            Recall finds supported files and fingerprints them so it can spot changes. Each time it
+            starts, it checks your folders again; files that haven't changed aren't re-read. Reading
+            the text inside files arrives in Milestone 5.
           </p>
         </>
       )}

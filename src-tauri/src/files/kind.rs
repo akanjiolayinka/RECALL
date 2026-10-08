@@ -14,6 +14,29 @@ pub enum FileKind {
 }
 
 impl FileKind {
+    /// Name used in the database and the API.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Pdf => "pdf",
+            Self::Text => "text",
+            Self::Markdown => "markdown",
+            Self::Docx => "docx",
+            Self::Image => "image",
+        }
+    }
+
+    pub fn parse(value: &str) -> Option<Self> {
+        [
+            Self::Pdf,
+            Self::Text,
+            Self::Markdown,
+            Self::Docx,
+            Self::Image,
+        ]
+        .into_iter()
+        .find(|kind| kind.as_str() == value)
+    }
+
     /// Decide the kind from the file extension (case-insensitive).
     /// Returns `None` for unsupported files, which the scanner ignores.
     pub fn from_path(path: &Path) -> Option<Self> {
@@ -26,6 +49,20 @@ impl FileKind {
             "png" | "jpg" | "jpeg" | "webp" => Some(Self::Image),
             _ => None,
         }
+    }
+}
+
+/// Standard MIME type for a supported extension (lowercase, without the dot).
+pub fn mime_type(extension: &str) -> &'static str {
+    match extension {
+        "pdf" => "application/pdf",
+        "txt" => "text/plain",
+        "md" | "markdown" => "text/markdown",
+        "docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "png" => "image/png",
+        "jpg" | "jpeg" => "image/jpeg",
+        "webp" => "image/webp",
+        _ => "application/octet-stream",
     }
 }
 
@@ -51,6 +88,20 @@ mod tests {
             FileKind::from_path(Path::new("report.docx")),
             Some(FileKind::Docx)
         );
+    }
+
+    #[test]
+    fn names_round_trip() {
+        for kind in [
+            FileKind::Pdf,
+            FileKind::Text,
+            FileKind::Markdown,
+            FileKind::Docx,
+            FileKind::Image,
+        ] {
+            assert_eq!(FileKind::parse(kind.as_str()), Some(kind));
+        }
+        assert_eq!(FileKind::parse("exe"), None);
     }
 
     #[test]

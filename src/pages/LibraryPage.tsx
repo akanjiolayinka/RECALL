@@ -72,9 +72,8 @@ export function LibraryPage() {
             removingId={removeLocation.isPending ? removeLocation.variables : undefined}
           />
           <p className="text-xs text-muted-foreground">
-            Recall finds supported files (PDF, Word, text, Markdown and images) but doesn't read
-            what's inside them yet. Folders and files are forgotten when you close the app for now;
-            saving them comes in Milestone 4.
+            Recall finds supported files (PDF, Word, text, Markdown and images) and remembers them
+            between launches. It doesn't read what's inside them yet.
           </p>
           <FileBrowser />
         </>
