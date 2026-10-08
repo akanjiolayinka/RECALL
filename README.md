@@ -7,9 +7,9 @@ This project was submitted to the ryze.ai hackathon by Olayinka Akanji.
 Recall is a local-first desktop app for searching the files on your computer by
 what you remember about them, not by filename. All AI runs on your device.
 
-> **Status: early development (Milestone 3 of 15).** You can choose folders and
-> Recall finds the supported files in them. Reading file contents and search
-> are **not implemented yet**.
+> **Status: early development (Milestone 4 of 15).** You can choose folders;
+> Recall finds the supported files in them and remembers them in a local
+> SQLite database. Reading file contents and search are **not implemented yet**.
 > This README only describes what currently works; it will grow as features land.
 
 ## What works today
@@ -19,8 +19,10 @@ what you remember about them, not by filename. All AI runs on your device.
 | Desktop app launches (Tauri + React) | Working |
 | Frontend talks to the Rust backend | Working |
 | Development mock mode for UI work | Working |
-| Choose folders in Library (system folder picker) | Working — not yet saved between launches |
-| Find supported files (PDF, DOCX, TXT, MD, PNG, JPG, WEBP) with size, dates and a SHA-256 fingerprint | Working — in memory only |
+| Choose folders in Library (system folder picker) | Working |
+| Find supported files (PDF, DOCX, TXT, MD, PNG, JPG, WEBP) with size, dates and a SHA-256 fingerprint | Working |
+| Remember folders and files between launches (local SQLite database) | Working |
+| Re-check folders at startup and on Rescan; unchanged files aren't re-read | Working |
 | Browse and filter found files by name and type; live scan progress | Working |
 | Reading file contents, search, OCR, embeddings | Not implemented yet |
 
@@ -38,6 +40,19 @@ npm run tauri dev
 ```
 
 The first run compiles the Rust backend and takes a few minutes.
+
+### Where Recall keeps its data
+
+Recall's index is a single SQLite file, `recall.db`, in the app data folder:
+
+| OS | Location |
+| --- | --- |
+| Windows | `%APPDATA%\ai.recall.desktop\` |
+| macOS | `~/Library/Application Support/ai.recall.desktop/` |
+| Linux | `~/.local/share/ai.recall.desktop/` |
+
+It contains file paths, sizes, dates and fingerprints — never copies of your
+files. Deleting it resets Recall; your own files are never modified.
 
 ### Run the backend tests
 
@@ -70,6 +85,7 @@ src-tauri/           Rust backend (Tauri)
   src/commands/      Commands the frontend can call (thin adapters)
   src/locations/     Rules for which folders can be added (unit-tested)
   src/files/         Finding, describing, fingerprinting and filtering files (unit-tested)
-  src/scanning.rs    Runs scans in the background and reports progress
+  src/scanning.rs    Runs scans in the background, saves results, reports progress
+  src/database/      SQLite storage and numbered schema migrations (unit-tested)
   src/error.rs       The error format every command returns
 ```

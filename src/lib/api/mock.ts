@@ -90,6 +90,7 @@ async function simulateScan(location: Location) {
         error: null,
       })),
     );
+  locations = locations.map((l) => (l.id === location.id ? { ...l, fileCount: total } : l));
   setScan({ ...base, state: "done", filesFound: total, filesProcessed: total });
 }
 
@@ -113,6 +114,7 @@ export const mockApi: RecallApi = {
       id: `loc-${nextId++}`,
       name: folder.path.split("/").pop()!,
       path: folder.path,
+      fileCount: 0,
       scan: null,
     };
     locations = [...locations, location];

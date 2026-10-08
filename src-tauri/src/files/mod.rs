@@ -5,31 +5,56 @@
 
 pub mod hash;
 pub mod kind;
-pub mod query;
 pub mod scan;
 
 use std::path::PathBuf;
-use std::time::SystemTime;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 pub use kind::FileKind;
 
-/// A supported file found inside a location, plus what we learned about it.
-#[derive(Debug, Clone)]
+/// Where a file is in Recall's pipeline. Stored in `files.status`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FileStatus {
+    /// Found and fingerprinted; contents not indexed yet.
+    Pending,
+    /// Contents indexed (from Milestone 5).
+    Indexed,
+    /// Couldn't be read; see `FileRecord::error`.
+    Error,
+}
+
+impl FileStatus {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Pending => "pending",
+            Self::Indexed => "indexed",
+            Self::Error => "error",
+        }
+    }
+
+    pub fn parse(value: &str) -> Option<Self> {
+        match value {
+            "pending" => Some(Self::Pending),
+            "indexed" => Some(Self::Indexed),
+            "error" => Some(Self::Error),
+            _ => None,
+        }
+    }
+}
+
+/// A file stored in the index.
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FileRecord {
-    pub id: String,
-    pub location_id: String,
+    pub id: i64,
+    pub location_id: i64,
     pub path: PathBuf,
     pub kind: FileKind,
     pub size_bytes: u64,
-    pub modified_at: Option<SystemTime>,
-    pub created_at: Option<SystemTime>,
-    /// SHA-256 of the file contents, hex encoded. `None` if it couldn't be read.
-    #[expect(
-        dead_code,
-        reason = "computed now; used for change detection once files are stored in SQLite (Milestone 4)"
-    )]
-    pub content_hash: Option<String>,
-    /// Why the file couldn't be read, for display. `None` when all went well.
+    /// Milliseconds since the Unix epoch.
+    pub modified_at: Option<i64>,
+    pub created_at: Option<i64>,
+    pub status: FileStatus,
+    /// Why the file couldn't be read, for display.
     pub error: Option<String>,
 }
 
@@ -40,4 +65,13 @@ impl FileRecord {
             .map(|name| name.to_string_lossy().into_owned())
             .unwrap_or_default()
     }
+}
+
+/// Milliseconds since the Unix epoch, the time format used everywhere in Recall.
+pub fn unix_millis(time: SystemTime) -> Option<i64> {
+    i64::try_from(time.duration_since(UNIX_EPOCH).ok()?.as_millis()).ok()
+}
+
+pub fn now_millis() -> i64 {
+    unix_millis(SystemTime::now()).unwrap_or(0)
 }

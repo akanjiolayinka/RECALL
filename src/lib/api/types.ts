@@ -34,7 +34,7 @@ export interface ScanStatus {
   state: ScanState;
   /** Supported files found so far. */
   filesFound: number;
-  /** Files read and fingerprinted so far (including ones that failed). */
+  /** Files checked so far (including unchanged ones and ones that failed). */
   filesProcessed: number;
   /** Files that were found but couldn't be read. */
   filesFailed: number;
@@ -53,7 +53,9 @@ export interface Location {
   name: string;
   /** Full absolute path on this computer. */
   path: string;
-  /** Latest scan progress, or null if the folder hasn't been scanned yet. */
+  /** Files from this folder currently saved in the index. */
+  fileCount: number;
+  /** Latest scan progress since the app started, or null if not scanned yet. */
   scan: ScanStatus | null;
 }
 
@@ -113,7 +115,7 @@ export interface RecallApi {
   listLocations(): Promise<Location[]>;
   /** Removes a folder from the library. Never deletes or changes the files. */
   removeLocation(id: string): Promise<void>;
-  /** Scans a folder again from scratch. Progress arrives via `onScanProgress`. */
+  /** Checks a folder again for new, changed and deleted files. Progress arrives via `onScanProgress`. */
   rescanLocation(id: string): Promise<void>;
   listFiles(query?: FileListQuery): Promise<FileListPage>;
   /** Subscribe to live scan progress. Resolves to a function that unsubscribes. */

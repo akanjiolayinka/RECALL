@@ -1,10 +1,10 @@
 use serde::{Deserialize, Serialize};
 use tauri::State;
 
-use crate::error::ApiError;
-use crate::files::query::{self, FileQuery};
+use crate::database::files::{self as file_store, FileQuery};
+use crate::database::Database;
+use crate::error::{parse_id, ApiError};
 use crate::files::{FileKind, FileRecord};
-use crate::scanning::ScanStore;
 
 /// Filters for `list_files`. Mirrors `FileListQuery` in src/lib/api/types.ts.
 #[derive(Debug, Default, Deserialize)]
@@ -41,63 +41,63 @@ pub struct FileListPage {
     pub total: usize,
 }
 
-fn to_millis(time: Option<std::time::SystemTime>) -> Option<i64> {
-    let millis = time?
-        .duration_since(std::time::UNIX_EPOCH)
-        .ok()?
-        .as_millis();
-    i64::try_from(millis).ok()
-}
-
-impl From<&FileRecord> for FileDto {
-    fn from(record: &FileRecord) -> Self {
+impl From<FileRecord> for FileDto {
+    fn from(record: FileRecord) -> Self {
         Self {
-            id: record.id.clone(),
-            location_id: record.location_id.clone(),
+            id: record.id.to_string(),
+            location_id: record.location_id.to_string(),
             name: record.file_name(),
             path: record.path.to_string_lossy().into_owned(),
             kind: record.kind,
             size_bytes: record.size_bytes,
-            modified_at: to_millis(record.modified_at),
-            created_at: to_millis(record.created_at),
-            error: record.error.clone(),
+            modified_at: record.modified_at,
+            created_at: record.created_at,
+            error: record.error,
         }
     }
 }
 
-fn parse_kind(kind: &str) -> Result<FileKind, ApiError> {
-    match kind {
-        "pdf" => Ok(FileKind::Pdf),
-        "text" => Ok(FileKind::Text),
-        "markdown" => Ok(FileKind::Markdown),
-        "docx" => Ok(FileKind::Docx),
-        "image" => Ok(FileKind::Image),
-        _ => Err(ApiError::new(
-            "invalid_request",
-            format!("Unknown file type filter: {kind}"),
-        )),
-    }
-}
-
-/// Lists files found in the library, with optional filters and paging.
+/// Lists files in the index, with optional filters and paging.
 #[tauri::command]
 pub fn list_files(
     query: Option<FileListQuery>,
-    scans: State<'_, ScanStore>,
+    db: State<'_, Database>,
 ) -> Result<FileListPage, ApiError> {
     let request = query.unwrap_or_default();
+    let location_id = request
+        .location_id
+        .as_deref()
+        .map(|id| {
+            parse_id(
+                id,
+                "location_not_found",
+                "That folder is no longer in your library.",
+            )
+        })
+        .transpose()?;
+    let kind = request
+        .kind
+        .as_deref()
+        .map(|kind| {
+            FileKind::parse(kind).ok_or_else(|| {
+                ApiError::new(
+                    "invalid_request",
+                    format!("Unknown file type filter: {kind}"),
+                )
+            })
+        })
+        .transpose()?;
+
     let query = FileQuery {
-        location_id: request.location_id,
-        kind: request.kind.as_deref().map(parse_kind).transpose()?,
+        location_id,
+        kind,
         name_contains: request.name_contains,
-        limit: request.limit.unwrap_or(query::DEFAULT_LIMIT),
+        limit: request.limit.unwrap_or(file_store::DEFAULT_LIMIT),
         offset: request.offset.unwrap_or(0),
     };
-    Ok(scans.with_files(|records| {
-        let (page, total) = query::apply(records, &query);
-        FileListPage {
-            files: page.into_iter().map(FileDto::from).collect(),
-            total,
-        }
-    }))
+    let (files, total) = file_store::query(&db.connect()?, &query)?;
+    Ok(FileListPage {
+        files: files.into_iter().map(FileDto::from).collect(),
+        total,
+    })
 }
