@@ -2,7 +2,8 @@
 //!
 //! A scan runs on its own thread so the UI stays responsive. It finds the
 //! supported files in a location, fingerprints (hashes) new or changed ones,
-//! saves them to the database, and removes files that no longer exist.
+//! saves them to the database, removes files that no longer exist, and then
+//! reads the text of new or changed documents.
 //! Progress is kept in memory and pushed to the UI as `scan-progress` events.
 
 use std::collections::{HashMap, HashSet};
@@ -15,8 +16,10 @@ use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager};
 
 use crate::database::{self, files::ScannedFile, Database};
+use crate::extract;
 use crate::files::scan::{discover, Cancelled, DiscoveredFile};
 use crate::files::{hash::sha256_file, now_millis, unix_millis};
+use crate::indexing::chunk::chunk_pages;
 
 /// Name of the event the UI listens to. Documented in docs/API.md.
 pub const SCAN_PROGRESS_EVENT: &str = "scan-progress";
@@ -39,6 +42,8 @@ pub enum ScanState {
     Discovering,
     /// Fingerprinting new or changed files and saving them.
     Hashing,
+    /// Extracting and chunking the text of new or changed documents.
+    Reading,
     Done,
     Failed,
 }
@@ -57,6 +62,12 @@ pub struct ScanStatus {
     pub files_failed: usize,
     /// Folders or files skipped because we weren't allowed to read them.
     pub unreadable: usize,
+    /// Documents whose text needs reading in this scan.
+    pub files_to_read: usize,
+    /// Documents read so far, including ones whose text couldn't be read.
+    pub files_read: usize,
+    /// Documents whose text couldn't be read (damaged, scanned, too large...).
+    pub read_failed: usize,
     /// Name (not full path) of the file being processed.
     pub current_file: Option<String>,
     pub error: Option<String>,
@@ -122,6 +133,9 @@ pub fn start_scan(app: &AppHandle, location_id: i64, root: PathBuf) {
         files_processed: 0,
         files_failed: 0,
         unreadable: 0,
+        files_to_read: 0,
+        files_read: 0,
+        read_failed: 0,
         current_file: None,
         error: None,
     };
@@ -275,13 +289,72 @@ fn scan_location(
     }
     tx.commit()?;
 
+    // Step 4: read the text of new or changed documents.
+    let pending = database::documents::pending_files(&conn, location_id)?;
+    let to_read = pending.len();
     report(true, &mut |status| {
         status.files_processed = total;
         status.files_failed = failed;
         status.current_file = None;
+        status.files_to_read = to_read;
+        status.state = ScanState::Reading;
+    });
+    let mut read_failed = 0;
+    for (index, file) in pending.into_iter().enumerate() {
+        if cancel.load(Ordering::Relaxed) {
+            return Err(ScanStop::Cancelled);
+        }
+        let name = file
+            .path
+            .file_name()
+            .map(|n| n.to_string_lossy().into_owned());
+        report(false, &mut |status| {
+            status.files_read = index;
+            status.read_failed = read_failed;
+            status.current_file = name.clone();
+        });
+        if !read_document(&mut conn, &file)? {
+            read_failed += 1;
+        }
+    }
+
+    report(true, &mut |status| {
+        status.files_read = to_read;
+        status.read_failed = read_failed;
+        status.current_file = None;
         status.state = ScanState::Done;
     });
     Ok(())
+}
+
+/// Extract, chunk and save one document. Returns `false` if its text
+/// couldn't be read (the reason is saved on the file for the UI).
+fn read_document(
+    conn: &mut rusqlite::Connection,
+    file: &database::documents::PendingFile,
+) -> rusqlite::Result<bool> {
+    match extract::extract(&file.path, file.kind) {
+        Ok(extracted) => {
+            let (full_text, chunks) = chunk_pages(&extracted.pages);
+            let tx = conn.transaction()?;
+            database::documents::save_document(
+                &tx,
+                file.id,
+                &extracted,
+                &full_text,
+                &chunks,
+                now_millis(),
+            )?;
+            tx.commit()?;
+            Ok(true)
+        }
+        Err(err) => {
+            // Log the technical reason (never the file's contents).
+            eprintln!("recall: could not read file {}: {err}", file.id);
+            database::documents::mark_unreadable(conn, file.id, &err.user_message(file.kind))?;
+            Ok(false)
+        }
+    }
 }
 
 /// A discovered file after we tried to fingerprint it.

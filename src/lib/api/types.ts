@@ -23,7 +23,7 @@ export interface ApiError {
 }
 
 /** Where a folder scan is up to. */
-export type ScanState = "discovering" | "hashing" | "done" | "failed";
+export type ScanState = "discovering" | "hashing" | "reading" | "done" | "failed";
 
 /**
  * Progress of scanning one folder. Returned inside `Location` and also pushed
@@ -40,6 +40,12 @@ export interface ScanStatus {
   filesFailed: number;
   /** Folders/files skipped because Recall wasn't allowed to read them. */
   unreadable: number;
+  /** Documents whose text needs reading in this scan. */
+  filesToRead: number;
+  /** Documents read so far (including ones whose text couldn't be read). */
+  filesRead: number;
+  /** Documents whose text couldn't be read (damaged, scanned, too large…). */
+  readFailed: number;
   /** Name of the file being processed right now. */
   currentFile: string | null;
   /** User-facing reason, when `state` is "failed". */
@@ -62,6 +68,14 @@ export interface Location {
 /** Supported file types. */
 export type FileKind = "pdf" | "text" | "markdown" | "docx" | "image";
 
+/**
+ * Where a file is in Recall's pipeline:
+ * - "pending": found, but its contents haven't been read yet (images wait for OCR)
+ * - "indexed": contents read and searchable
+ * - "error": couldn't be read; see `IndexedFile.error`
+ */
+export type FileStatus = "pending" | "indexed" | "error";
+
 /** A supported file Recall found in one of the user's folders. */
 export interface IndexedFile {
   id: string;
@@ -73,6 +87,7 @@ export interface IndexedFile {
   /** Milliseconds since the Unix epoch, or null if unknown. */
   modifiedAt: number | null;
   createdAt: number | null;
+  status: FileStatus;
   /** User-facing reason the file couldn't be read, or null if it's fine. */
   error: string | null;
 }
@@ -93,6 +108,25 @@ export interface FileListPage {
   files: IndexedFile[];
   /** Number of files matching the filters, across all pages. */
   total: number;
+}
+
+/** One page of a document; `number` is null for formats without pages. */
+export interface DocumentPage {
+  number: number | null;
+  text: string;
+}
+
+/** The text Recall extracted from a file. */
+export interface DocumentText {
+  fileId: string;
+  title: string | null;
+  author: string | null;
+  /** Number of pages, for formats that have pages (PDF). */
+  pageCount: number | null;
+  wordCount: number;
+  /** Number of searchable passages the text was split into. */
+  chunkCount: number;
+  pages: DocumentPage[];
 }
 
 /** Call to stop listening to an event. */
@@ -118,6 +152,8 @@ export interface RecallApi {
   /** Checks a folder again for new, changed and deleted files. Progress arrives via `onScanProgress`. */
   rescanLocation(id: string): Promise<void>;
   listFiles(query?: FileListQuery): Promise<FileListPage>;
+  /** The text extracted from a file, or null if it hasn't been read. */
+  getDocument(fileId: string): Promise<DocumentText | null>;
   /** Subscribe to live scan progress. Resolves to a function that unsubscribes. */
   onScanProgress(handler: (status: ScanStatus) => void): Promise<Unsubscribe>;
 }

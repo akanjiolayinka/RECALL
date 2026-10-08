@@ -5,6 +5,7 @@ import type {
   AddLocationResult,
   ApiError,
   AppInfo,
+  DocumentText,
   FileListPage,
   Location,
   RecallApi,
@@ -46,6 +47,7 @@ export const tauriApi: RecallApi = {
   removeLocation: (id) => call<void>("remove_location", { id }),
   rescanLocation: (id) => call<void>("rescan_location", { id }),
   listFiles: (query) => call<FileListPage>("list_files", { query: query ?? null }),
+  getDocument: (fileId) => call<DocumentText | null>("get_document", { fileId }),
   onScanProgress: async (handler) => {
     if (!isTauri()) return () => {};
     return listen<ScanStatus>(SCAN_PROGRESS_EVENT, (event) => handler(event.payload));

@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use tauri::State;
 
+use crate::database::documents::{self, StoredDocument};
 use crate::database::files::{self as file_store, FileQuery};
 use crate::database::Database;
 use crate::error::{parse_id, ApiError};
@@ -30,6 +31,8 @@ pub struct FileDto {
     /// Milliseconds since the Unix epoch.
     pub modified_at: Option<i64>,
     pub created_at: Option<i64>,
+    /// "pending" (contents not read yet), "indexed" or "error".
+    pub status: &'static str,
     pub error: Option<String>,
 }
 
@@ -52,6 +55,7 @@ impl From<FileRecord> for FileDto {
             size_bytes: record.size_bytes,
             modified_at: record.modified_at,
             created_at: record.created_at,
+            status: record.status.as_str(),
             error: record.error,
         }
     }
@@ -100,4 +104,62 @@ pub fn list_files(
         files: files.into_iter().map(FileDto::from).collect(),
         total,
     })
+}
+
+/// One page (or the whole text, for formats without pages) of a document.
+/// Mirrors `DocumentPage` in src/lib/api/types.ts.
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DocumentPageDto {
+    pub number: Option<u32>,
+    pub text: String,
+}
+
+/// The text Recall extracted from a file. Mirrors `DocumentText` in src/lib/api/types.ts.
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DocumentDto {
+    pub file_id: String,
+    pub title: Option<String>,
+    pub author: Option<String>,
+    pub page_count: Option<u32>,
+    pub word_count: u32,
+    pub chunk_count: u32,
+    pub pages: Vec<DocumentPageDto>,
+}
+
+impl DocumentDto {
+    fn new(file_id: i64, document: StoredDocument) -> Self {
+        Self {
+            file_id: file_id.to_string(),
+            title: document.title,
+            author: document.author,
+            page_count: document.page_count,
+            word_count: document.word_count,
+            chunk_count: document.chunk_count,
+            pages: document
+                .pages
+                .into_iter()
+                .map(|page| DocumentPageDto {
+                    number: page.number,
+                    text: page.text,
+                })
+                .collect(),
+        }
+    }
+}
+
+/// The text extracted from a file, or `None` if it hasn't been read (yet).
+#[tauri::command]
+pub fn get_document(
+    file_id: String,
+    db: State<'_, Database>,
+) -> Result<Option<DocumentDto>, ApiError> {
+    let id = parse_id(
+        &file_id,
+        "file_not_found",
+        "That file is no longer in your library.",
+    )?;
+    let document = documents::get_document(&db.connect()?, id)?;
+    Ok(document.map(|document| DocumentDto::new(id, document)))
 }

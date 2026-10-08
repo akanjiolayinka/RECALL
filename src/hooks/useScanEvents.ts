@@ -24,6 +24,7 @@ export function useScanEvents() {
         );
         if (status.state === "done" || status.state === "failed") {
           void queryClient.invalidateQueries({ queryKey: FILES_KEY });
+          void queryClient.invalidateQueries({ queryKey: ["document"] });
         }
       })
       .then((stop) => {

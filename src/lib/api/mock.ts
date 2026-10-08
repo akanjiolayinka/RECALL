@@ -9,6 +9,7 @@ import type {
   AddLocationResult,
   ApiError,
   AppInfo,
+  DocumentText,
   FileKind,
   FileListPage,
   FileListQuery,
@@ -64,6 +65,9 @@ async function simulateScan(location: Location) {
     filesProcessed: 0,
     filesFailed: 0,
     unreadable: 0,
+    filesToRead: 0,
+    filesRead: 0,
+    readFailed: 0,
     currentFile: null,
     error: null,
   };
@@ -87,11 +91,22 @@ async function simulateScan(location: Location) {
         sizeBytes,
         modifiedAt: Date.now() - i * 86_400_000,
         createdAt: null,
+        status: kind === "image" ? ("pending" as const) : ("indexed" as const),
         error: null,
       })),
     );
   locations = locations.map((l) => (l.id === location.id ? { ...l, fileCount: total } : l));
-  setScan({ ...base, state: "done", filesFound: total, filesProcessed: total });
+  const readable = folder.files.filter(([, kind]) => kind !== "image").length;
+  setScan({ ...base, state: "reading", filesFound: total, filesProcessed: total, filesToRead: readable });
+  await delay(400);
+  setScan({
+    ...base,
+    state: "done",
+    filesFound: total,
+    filesProcessed: total,
+    filesToRead: readable,
+    filesRead: readable,
+  });
 }
 
 export const mockApi: RecallApi = {
@@ -148,6 +163,24 @@ export const mockApi: RecallApi = {
       .sort((a, b) => (b.modifiedAt ?? 0) - (a.modifiedAt ?? 0));
     const offset = query.offset ?? 0;
     return { files: matches.slice(offset, offset + (query.limit ?? 100)), total: matches.length };
+  },
+
+  async getDocument(fileId: string): Promise<DocumentText | null> {
+    await delay(150);
+    const file = files.find((f) => f.id === fileId);
+    if (!file || file.status !== "indexed") return null;
+    return {
+      fileId,
+      title: null,
+      author: null,
+      pageCount: file.kind === "pdf" ? 2 : null,
+      wordCount: 42,
+      chunkCount: 2,
+      pages: (file.kind === "pdf" ? [1, 2] : [null]).map((number) => ({
+        number,
+        text: `[Mock text] This is placeholder text for ${file.name}${number ? `, page ${number}` : ""}. Real text comes from the backend.`,
+      })),
+    };
   },
 
   async onScanProgress(handler) {

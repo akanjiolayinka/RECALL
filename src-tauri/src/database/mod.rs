@@ -7,6 +7,7 @@
 //! The query functions in the submodules take a `&Connection`, so tests can
 //! run them against an in-memory database.
 
+pub mod documents;
 pub mod files;
 pub mod locations;
 pub mod migrations;
