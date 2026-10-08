@@ -36,6 +36,8 @@ export interface ScanStatus {
   filesFound: number;
   /** Files checked so far (including unchanged ones and ones that failed). */
   filesProcessed: number;
+  /** Files that were new or changed since the last scan. */
+  filesChanged: number;
   /** Files that were found but couldn't be read. */
   filesFailed: number;
   /** Folders/files skipped because Recall wasn't allowed to read them. */
@@ -202,6 +204,19 @@ export interface AiStatus {
   ocr: AiFeatureStatus;
 }
 
+/** What Recall stores, measured from the running app. */
+export interface PrivacyReport {
+  /** Where the index is stored on this computer. */
+  databasePath: string;
+  /** Size of the index on disk, in bytes. */
+  databaseBytes: number;
+  folders: number;
+  files: number;
+  documents: number;
+  passages: number;
+  embeddings: number;
+}
+
 /** Call to stop listening to an event. */
 export type Unsubscribe = () => void;
 
@@ -230,6 +245,7 @@ export interface RecallApi {
   /** Search indexed files. Best matches first, one result per file. */
   search(request: SearchRequest): Promise<SearchResult[]>;
   getAiStatus(): Promise<AiStatus>;
+  getPrivacyReport(): Promise<PrivacyReport>;
   /**
    * The text supporting a result. Null when it can't be located reliably
    * (e.g. the file was re-indexed since the search) — show that, never guess.

@@ -27,6 +27,7 @@ export function useRemoveLocation() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: LOCATIONS_KEY });
       void queryClient.invalidateQueries({ queryKey: FILES_KEY });
+      void queryClient.invalidateQueries({ queryKey: ["search"] });
     },
   });
 }

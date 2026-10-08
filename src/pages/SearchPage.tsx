@@ -34,7 +34,9 @@ export function SearchPage() {
 
   function runSearch(value: string) {
     setText(value);
-    setQuery(value.trim());
+    // Searching the same words again should look again, not reuse old results.
+    if (value.trim() === query) void results.refetch();
+    else setQuery(value.trim());
   }
 
   function handleSubmit(event: FormEvent) {

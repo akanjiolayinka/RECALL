@@ -1,7 +1,9 @@
 use serde::Serialize;
 use tauri::State;
 
+use crate::database::{self, Database};
 use crate::embeddings::EmbeddingModel;
+use crate::error::ApiError;
 use crate::ocr::OcrModel;
 
 /// Basic information about the running application.
@@ -67,4 +69,34 @@ pub fn get_ai_status(embeddings: State<'_, EmbeddingModel>, ocr: State<'_, OcrMo
             unavailable_reason: ocr.unavailable_reason.clone(),
         },
     }
+}
+
+/// Facts about what Recall stores, measured from the running app. Mirrors
+/// `PrivacyReport` in src/lib/api/types.ts.
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PrivacyReport {
+    /// Where the index is stored on this computer.
+    pub database_path: String,
+    /// Size of the index on disk, in bytes.
+    pub database_bytes: u64,
+    pub folders: u64,
+    pub files: u64,
+    pub documents: u64,
+    pub passages: u64,
+    pub embeddings: u64,
+}
+
+#[tauri::command]
+pub fn get_privacy_report(db: State<'_, Database>) -> Result<PrivacyReport, ApiError> {
+    let counts = database::counts(&db.connect()?)?;
+    Ok(PrivacyReport {
+        database_path: db.path().to_string_lossy().into_owned(),
+        database_bytes: db.size_on_disk(),
+        folders: counts.locations,
+        files: counts.files,
+        documents: counts.documents,
+        passages: counts.passages,
+        embeddings: counts.embeddings,
+    })
 }

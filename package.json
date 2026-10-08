@@ -11,7 +11,8 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "test": "vitest run",
-    "download-models": "node scripts/download-models.mjs"
+    "download-models": "node scripts/download-models.mjs",
+    "audit:privacy": "node scripts/audit-privacy.mjs"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.2.0",
