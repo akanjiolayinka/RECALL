@@ -7,8 +7,9 @@ This project was submitted to the ryze.ai hackathon by Olayinka Akanji.
 Recall is a local-first desktop app for searching the files on your computer by
 what you remember about them, not by filename. All AI runs on your device.
 
-> **Status: early development (Milestone 2 of 15).** The desktop app launches
-> and you can choose folders. Indexing and search are **not implemented yet**.
+> **Status: early development (Milestone 3 of 15).** You can choose folders and
+> Recall finds the supported files in them. Reading file contents and search
+> are **not implemented yet**.
 > This README only describes what currently works; it will grow as features land.
 
 ## What works today
@@ -19,7 +20,9 @@ what you remember about them, not by filename. All AI runs on your device.
 | Frontend talks to the Rust backend | Working |
 | Development mock mode for UI work | Working |
 | Choose folders in Library (system folder picker) | Working — not yet saved between launches |
-| File scanning, indexing, search, OCR, embeddings | Not implemented yet |
+| Find supported files (PDF, DOCX, TXT, MD, PNG, JPG, WEBP) with size, dates and a SHA-256 fingerprint | Working — in memory only |
+| Browse and filter found files by name and type; live scan progress | Working |
+| Reading file contents, search, OCR, embeddings | Not implemented yet |
 
 ## Requirements
 
@@ -59,11 +62,14 @@ src/                 React + TypeScript frontend
   components/ui/     Reusable UI building blocks (shadcn/ui style)
   components/layout/ App shell: sidebar, page header, placeholders
   pages/             One file per screen
-  components/library/ Library screen pieces (folder list)
+  components/library/ Library screen pieces (folder list, file browser)
+  components/indexing/ Scan progress display
   hooks/             React hooks that load data through the API client
   lib/api/           The only place the frontend talks to the backend
 src-tauri/           Rust backend (Tauri)
   src/commands/      Commands the frontend can call (thin adapters)
   src/locations/     Rules for which folders can be added (unit-tested)
+  src/files/         Finding, describing, fingerprinting and filtering files (unit-tested)
+  src/scanning.rs    Runs scans in the background and reports progress
   src/error.rs       The error format every command returns
 ```

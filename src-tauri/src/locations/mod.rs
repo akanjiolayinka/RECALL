@@ -62,6 +62,10 @@ impl LocationStore {
         &self.locations
     }
 
+    pub fn get(&self, id: &str) -> Option<&Location> {
+        self.locations.iter().find(|location| location.id == id)
+    }
+
     pub fn add(&mut self, path: &Path) -> Result<Added, LocationError> {
         // `dunce` returns normal `C:\...` paths on Windows instead of the
         // `\\?\C:\...` form produced by `std::fs::canonicalize`.

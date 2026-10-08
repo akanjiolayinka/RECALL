@@ -1,6 +1,18 @@
 import { invoke, isTauri } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 
-import type { AddLocationResult, ApiError, AppInfo, Location, RecallApi } from "./types";
+import type {
+  AddLocationResult,
+  ApiError,
+  AppInfo,
+  FileListPage,
+  Location,
+  RecallApi,
+  ScanStatus,
+} from "./types";
+
+/** Backend event names. Must match the constants in src-tauri/src/. */
+const SCAN_PROGRESS_EVENT = "scan-progress";
 
 /** Convert whatever a Tauri command rejected with into our ApiError shape. */
 function toApiError(err: unknown): ApiError {
@@ -32,4 +44,10 @@ export const tauriApi: RecallApi = {
   addLocation: () => call<AddLocationResult | null>("add_location"),
   listLocations: () => call<Location[]>("list_locations"),
   removeLocation: (id) => call<void>("remove_location", { id }),
+  rescanLocation: (id) => call<void>("rescan_location", { id }),
+  listFiles: (query) => call<FileListPage>("list_files", { query: query ?? null }),
+  onScanProgress: async (handler) => {
+    if (!isTauri()) return () => {};
+    return listen<ScanStatus>(SCAN_PROGRESS_EVENT, (event) => handler(event.payload));
+  },
 };

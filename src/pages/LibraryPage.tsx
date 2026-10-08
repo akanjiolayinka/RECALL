@@ -1,17 +1,24 @@
 import { FolderPlus, Info } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/PageHeader";
+import { FileBrowser } from "@/components/library/FileBrowser";
 import { LocationList } from "@/components/library/LocationList";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorMessage } from "@/components/ui/error-message";
-import { useAddLocation, useLocations, useRemoveLocation } from "@/hooks/useLocations";
+import {
+  useAddLocation,
+  useLocations,
+  useRemoveLocation,
+  useRescanLocation,
+} from "@/hooks/useLocations";
 import { errorMessage } from "@/lib/api/client";
 
 export function LibraryPage() {
   const locations = useLocations();
   const addLocation = useAddLocation();
   const removeLocation = useRemoveLocation();
+  const rescanLocation = useRescanLocation();
 
   const addButton = (
     <Button onClick={() => addLocation.mutate()} disabled={addLocation.isPending}>
@@ -21,7 +28,7 @@ export function LibraryPage() {
   );
 
   const replaced = addLocation.data?.replaced ?? [];
-  const mutationError = addLocation.error ?? removeLocation.error;
+  const mutationError = addLocation.error ?? removeLocation.error ?? rescanLocation.error;
 
   return (
     <div className="flex flex-col gap-6">
@@ -61,12 +68,15 @@ export function LibraryPage() {
           <LocationList
             locations={locations.data}
             onRemove={(location) => removeLocation.mutate(location.id)}
+            onRescan={(location) => rescanLocation.mutate(location.id)}
             removingId={removeLocation.isPending ? removeLocation.variables : undefined}
           />
           <p className="text-xs text-muted-foreground">
-            Recall doesn't read these folders yet — file scanning arrives in the next milestone. For
-            now, this list is also forgotten when you close the app; saving it comes in Milestone 4.
+            Recall finds supported files (PDF, Word, text, Markdown and images) but doesn't read
+            what's inside them yet. Folders and files are forgotten when you close the app for now;
+            saving them comes in Milestone 4.
           </p>
+          <FileBrowser />
         </>
       )}
     </div>

@@ -1,16 +1,18 @@
-import { Folder, Trash2 } from "lucide-react";
+import { Folder, RotateCw, Trash2 } from "lucide-react";
 
+import { isScanning, ScanProgress } from "@/components/indexing/ScanProgress";
 import { Button } from "@/components/ui/button";
 import type { Location } from "@/lib/api/client";
 
 interface LocationListProps {
   locations: Location[];
   onRemove: (location: Location) => void;
+  onRescan: (location: Location) => void;
   removingId?: string;
 }
 
-/** The folders in the user's library, each with a remove action. */
-export function LocationList({ locations, onRemove, removingId }: LocationListProps) {
+/** The folders in the user's library, with scan status and actions. */
+export function LocationList({ locations, onRemove, onRescan, removingId }: LocationListProps) {
   return (
     <ul className="divide-y rounded-xl border bg-card">
       {locations.map((location) => (
@@ -18,22 +20,37 @@ export function LocationList({ locations, onRemove, removingId }: LocationListPr
           <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
             <Folder className="size-4" aria-hidden />
           </div>
-          <div className="min-w-0 flex-1">
-            <p className="truncate font-medium">{location.name}</p>
-            <p className="truncate text-xs text-muted-foreground" title={location.path}>
-              {location.path}
-            </p>
+          <div className="min-w-0 flex-1 space-y-1">
+            <div>
+              <p className="truncate font-medium">{location.name}</p>
+              <p className="truncate text-xs text-muted-foreground" title={location.path}>
+                {location.path}
+              </p>
+            </div>
+            <ScanProgress scan={location.scan} className="max-w-sm" />
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onRemove(location)}
-            disabled={removingId === location.id}
-            aria-label={`Remove ${location.name} from library`}
-          >
-            <Trash2 aria-hidden />
-            Remove
-          </Button>
+          <div className="flex shrink-0 gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onRescan(location)}
+              disabled={isScanning(location.scan)}
+              aria-label={`Scan ${location.name} again`}
+            >
+              <RotateCw aria-hidden />
+              Rescan
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onRemove(location)}
+              disabled={removingId === location.id}
+              aria-label={`Remove ${location.name} from library`}
+            >
+              <Trash2 aria-hidden />
+              Remove
+            </Button>
+          </div>
         </li>
       ))}
     </ul>
