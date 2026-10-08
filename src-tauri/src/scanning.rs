@@ -16,10 +16,12 @@ use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager};
 
 use crate::database::{self, files::ScannedFile, Database};
+use crate::embeddings::{EmbedError, EmbeddingModel};
 use crate::extract;
 use crate::files::scan::{discover, Cancelled, DiscoveredFile};
 use crate::files::{hash::sha256_file, now_millis, unix_millis};
 use crate::indexing::chunk::chunk_pages;
+use crate::indexing::embed::{embed_location, EmbedStop};
 
 /// Name of the event the UI listens to. Documented in docs/API.md.
 pub const SCAN_PROGRESS_EVENT: &str = "scan-progress";
@@ -44,6 +46,9 @@ pub enum ScanState {
     Hashing,
     /// Extracting and chunking the text of new or changed documents.
     Reading,
+    /// Computing embeddings for passages that don't have one (only when a
+    /// local embedding model is installed).
+    Embedding,
     Done,
     Failed,
 }
@@ -68,6 +73,9 @@ pub struct ScanStatus {
     pub files_read: usize,
     /// Documents whose text couldn't be read (damaged, scanned, too large...).
     pub read_failed: usize,
+    /// Passages needing an embedding in this scan (0 without a model).
+    pub passages_to_embed: usize,
+    pub passages_embedded: usize,
     /// Name (not full path) of the file being processed.
     pub current_file: Option<String>,
     pub error: Option<String>,
@@ -136,6 +144,8 @@ pub fn start_scan(app: &AppHandle, location_id: i64, root: PathBuf) {
         files_to_read: 0,
         files_read: 0,
         read_failed: 0,
+        passages_to_embed: 0,
+        passages_embedded: 0,
         current_file: None,
         error: None,
     };
@@ -164,6 +174,17 @@ pub fn start_scan(app: &AppHandle, location_id: i64, root: PathBuf) {
 enum ScanStop {
     Cancelled,
     Database(rusqlite::Error),
+    Model(EmbedError),
+}
+
+impl From<EmbedStop> for ScanStop {
+    fn from(stop: EmbedStop) -> Self {
+        match stop {
+            EmbedStop::Cancelled => Self::Cancelled,
+            EmbedStop::Database(err) => Self::Database(err),
+            EmbedStop::Model(err) => Self::Model(err),
+        }
+    }
 }
 
 impl From<Cancelled> for ScanStop {
@@ -198,6 +219,10 @@ fn run_scan(app: &AppHandle, location_id: i64, root: &Path, cancel: &Arc<AtomicB
 
     match scan_location(app, location_id, root, cancel) {
         Ok(()) | Err(ScanStop::Cancelled) => {}
+        Err(ScanStop::Model(err)) => {
+            eprintln!("recall: embedding model failed for location {location_id}: {err}");
+            fail("Recall couldn't run its local AI model on this folder. Keyword search still works.");
+        }
         Err(ScanStop::Database(err)) => {
             // A removed location makes in-flight writes fail; that's expected.
             if !cancel.load(Ordering::Relaxed) {
@@ -322,8 +347,26 @@ fn scan_location(
         status.files_read = to_read;
         status.read_failed = read_failed;
         status.current_file = None;
-        status.state = ScanState::Done;
     });
+
+    // Step 5: embed passages that don't have an embedding from this model.
+    if let Some(embedder) = app.state::<EmbeddingModel>().embedder.clone() {
+        report(true, &mut |status| status.state = ScanState::Embedding);
+        embed_location(
+            &mut conn,
+            embedder.as_ref(),
+            location_id,
+            cancel,
+            |done, total| {
+                report(false, &mut |status| {
+                    status.passages_embedded = done;
+                    status.passages_to_embed = total;
+                });
+            },
+        )?;
+    }
+
+    report(true, &mut |status| status.state = ScanState::Done);
     Ok(())
 }
 

@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { FolderPlus, Search, SearchX } from "lucide-react";
+import { FolderPlus, Info, Search, SearchX } from "lucide-react";
 
 import { DocumentViewer, type ViewerFile } from "@/components/evidence/DocumentViewer";
 import { SearchResultCard } from "@/components/search/SearchResultCard";
@@ -8,7 +8,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorMessage } from "@/components/ui/error-message";
 import { Input } from "@/components/ui/input";
 import { useLocations } from "@/hooks/useLocations";
-import { useSearch } from "@/hooks/useSearch";
+import { useSearch, useSearchCapabilities } from "@/hooks/useSearch";
 import { errorMessage } from "@/lib/api/client";
 import { plural } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -25,6 +25,8 @@ export function SearchPage() {
   const [query, setQuery] = useState("");
   const [viewing, setViewing] = useState<ViewerFile | null>(null);
   const results = useSearch(query);
+  const capabilities = useSearchCapabilities();
+  const semanticOff = capabilities.data && !capabilities.data.semanticSearch;
   const locations = useLocations();
   const hasLibrary = (locations.data?.length ?? 0) > 0;
 
@@ -85,6 +87,13 @@ export function SearchPage() {
         </div>
       )}
 
+      {semanticOff && capabilities.data?.semanticUnavailableReason && (
+        <p className="flex items-start gap-2 text-xs text-muted-foreground">
+          <Info className="mt-px size-3.5 shrink-0" aria-hidden />
+          {capabilities.data.semanticUnavailableReason}
+        </p>
+      )}
+
       {locations.data && !hasLibrary ? (
         <EmptyState
           icon={FolderPlus}
@@ -98,7 +107,11 @@ export function SearchPage() {
           <EmptyState
             icon={SearchX}
             title="No matches"
-            description={`None of your indexed files mention the words in “${query}”. Search currently matches words, not meaning — try different words.`}
+            description={
+              semanticOff
+                ? `No file names or passages contain the words in “${query}”. Without the local AI model Recall matches words, not meaning, so try different words.`
+                : `Nothing in your indexed files matches “${query}”.`
+            }
           />
         ) : (
           <section aria-label="Search results" className={cn("flex flex-col gap-3", results.isPlaceholderData && "opacity-60")}>

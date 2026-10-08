@@ -17,6 +17,7 @@ import type {
   Location,
   RecallApi,
   ScanStatus,
+  SearchCapabilities,
   SearchResult,
 } from "./types";
 
@@ -69,6 +70,8 @@ async function simulateScan(location: Location) {
     filesToRead: 0,
     filesRead: 0,
     readFailed: 0,
+    passagesToEmbed: 0,
+    passagesEmbedded: 0,
     currentFile: null,
     error: null,
   };
@@ -209,6 +212,14 @@ export const mockApi: RecallApi = {
           matchReasons: [`Mentions “${word}”`],
         };
       });
+  },
+
+  async getSearchCapabilities(): Promise<SearchCapabilities> {
+    return {
+      semanticSearch: false,
+      embeddingModel: null,
+      semanticUnavailableReason: "Mock mode: meaning-based search is not simulated.",
+    };
   },
 
   async openFile(fileId: string): Promise<void> {

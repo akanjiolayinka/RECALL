@@ -7,10 +7,12 @@ This project was submitted to the ryze.ai hackathon by Olayinka Akanji.
 Recall is a local-first desktop app for searching the files on your computer by
 what you remember about them, not by filename. All AI runs on your device.
 
-> **Status: early development (Milestone 6 of 15).** You can choose folders,
-> Recall reads the text of PDF, Word, text and Markdown files, and **keyword
-> search** finds the passages that mention your words. Searching by meaning
-> (local AI embeddings) and reading images (OCR) are **not implemented yet**.
+> **Status: early development.** You can choose folders, Recall reads the text
+> of PDF, Word, text and Markdown files, and search finds files by the words
+> in their text and their names. **The local AI model is not installed yet**,
+> so searching by *meaning* is not available — the code for it is built and
+> unit-tested, but has not been tested with the real model (see
+> [docs/MODELS.md](docs/MODELS.md)). Reading images (OCR) is not implemented yet.
 > This README only describes what currently works; it will grow as features land.
 
 ## What works today
@@ -29,8 +31,11 @@ what you remember about them, not by filename. All AI runs on your device.
 | Clear messages for files that can't be read (damaged, password-protected, scanned PDFs, over 100 MB) | Working |
 | Browse and filter found files by name and type; live scan progress | Working |
 | Keyword search (SQLite FTS5): best passage per file, page number, highlighted snippet, why it matched | Working |
+| File-name and document-title matching (finds images by name) | Working |
+| Hybrid ranking of meaning, keyword and file-name matches | Working for keywords + names; meaning part unit-tested only |
 | Open a result in its default app | Working |
-| Meaning-based search (local embeddings), OCR for images and scanned PDFs | Not implemented yet |
+| Meaning-based search with BAAI/bge-small-en-v1.5 | **Pending**: model not yet downloaded or verified ([checkpoint](docs/MODELS.md)) |
+| OCR for images and scanned PDFs | Not implemented yet |
 
 ## Requirements
 
@@ -97,8 +102,10 @@ src-tauri/           Rust backend (Tauri)
   src/database/      SQLite storage and numbered schema migrations (unit-tested)
   src/extract/       Text extraction for TXT, MD, PDF, DOCX (unit-tested)
   src/indexing/      Splitting text into searchable passages (unit-tested)
-  src/search/        Keyword search and result ranking (unit-tested)
+  src/search/        Keyword, meaning and file-name search; hybrid ranking (unit-tested)
+  src/embeddings/    The Embedder interface for local embedding models (model pending)
 test-data/           Synthetic demo files (see test-data/README.md)
+docs/MODELS.md       AI models: status, verification checklist
 scripts/             Developer scripts (test data generator)
   src/error.rs       The error format every command returns
 ```

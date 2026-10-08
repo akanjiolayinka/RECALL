@@ -13,6 +13,7 @@ files to this folder.
 | `notes/Moving out checklist.md` | Markdown, title from the first heading |
 | `notes/Meeting notes 2026-05-02.txt` | Plain text |
 | `notes/Shopping list (UTF-16).txt` | UTF-16 text, as saved by older Windows Notepad ("Unicode") |
+| `images/Headphones receipt.png` | An image: found by file name now; its text needs OCR |
 
 To use it, add this `test-data` folder in Recall's **Library**.
 

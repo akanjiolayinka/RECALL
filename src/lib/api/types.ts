@@ -23,7 +23,7 @@ export interface ApiError {
 }
 
 /** Where a folder scan is up to. */
-export type ScanState = "discovering" | "hashing" | "reading" | "done" | "failed";
+export type ScanState = "discovering" | "hashing" | "reading" | "embedding" | "done" | "failed";
 
 /**
  * Progress of scanning one folder. Returned inside `Location` and also pushed
@@ -46,6 +46,9 @@ export interface ScanStatus {
   filesRead: number;
   /** Documents whose text couldn't be read (damaged, scanned, too large…). */
   readFailed: number;
+  /** Passages needing an embedding in this scan (0 when no AI model is installed). */
+  passagesToEmbed: number;
+  passagesEmbedded: number;
   /** Name of the file being processed right now. */
   currentFile: string | null;
   /** User-facing reason, when `state` is "failed". */
@@ -143,7 +146,7 @@ export interface SnippetPart {
 
 /** A file that matched a search, with its best-matching passage. */
 export interface SearchResult {
-  /** Id of the matching passage. */
+  /** Unique per result (the passage id, or the file id for name-only matches). */
   id: string;
   fileId: string;
   fileName: string;
@@ -151,15 +154,27 @@ export interface SearchResult {
   fileKind: FileKind;
   /** Page of the passage, for formats with pages. */
   page: number | null;
-  /** The matching passage, shortened around the matches. */
+  /**
+   * The matching passage, shortened around the matches. Empty when only the
+   * file name or title matched (e.g. an image whose text hasn't been read).
+   */
   snippet: SnippetPart[];
   /**
-   * 0–1 relevance for display; not comparable across searches. Today this is
-   * the share of the search's words found in the passage (1 = all of them).
+   * 0–1, combining meaning (when available), keyword and file-name matches.
+   * Use for ordering and coarse labels only; don't show the raw number.
    */
   relevance: number;
   /** Plain-language reasons, e.g. `Mentions “budget”`. Safe to show as-is. */
   matchReasons: string[];
+}
+
+/** Which search strategies this installation can use. */
+export interface SearchCapabilities {
+  /** True when a local embedding model is installed (meaning-based search). */
+  semanticSearch: boolean;
+  embeddingModel: string | null;
+  /** User-facing reason meaning-based search is unavailable. */
+  semanticUnavailableReason: string | null;
 }
 
 /** Call to stop listening to an event. */
@@ -187,8 +202,9 @@ export interface RecallApi {
   listFiles(query?: FileListQuery): Promise<FileListPage>;
   /** The text extracted from a file, or null if it hasn't been read. */
   getDocument(fileId: string): Promise<DocumentText | null>;
-  /** Search the text of indexed files. Best matches first, one result per file. */
+  /** Search indexed files. Best matches first, one result per file. */
   search(request: SearchRequest): Promise<SearchResult[]>;
+  getSearchCapabilities(): Promise<SearchCapabilities>;
   /** Open an indexed file in its default app on this computer. */
   openFile(fileId: string): Promise<void>;
   /** Subscribe to live scan progress. Resolves to a function that unsubscribes. */
