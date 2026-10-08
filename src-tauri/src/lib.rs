@@ -1,5 +1,6 @@
 mod commands;
 mod database;
+mod embeddings;
 mod error;
 mod extract;
 mod files;
@@ -7,6 +8,8 @@ mod indexing;
 mod locations;
 mod scanning;
 mod search;
+#[cfg(test)]
+mod test_support;
 
 use tauri::Manager;
 
@@ -34,6 +37,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .manage(ScanStore::default())
+        .manage(embeddings::load())
         .setup(setup)
         .invoke_handler(tauri::generate_handler![
             commands::app::get_app_info,
@@ -45,6 +49,7 @@ pub fn run() {
             commands::files::get_document,
             commands::search::search,
             commands::search::open_file,
+            commands::search::get_search_capabilities,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

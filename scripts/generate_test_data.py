@@ -2,9 +2,9 @@
 
 Every document here is invented. Never put real personal files in test-data/.
 
-Usage (needs the dev-only packages reportlab and python-docx):
+Usage (needs the dev-only packages reportlab, python-docx and Pillow):
     python -m venv .venv-testdata
-    .venv-testdata/bin/pip install reportlab python-docx   # Windows: .venv-testdata\\Scripts\\pip
+    .venv-testdata/bin/pip install reportlab python-docx pillow   # Windows: .venv-testdata\\Scripts\\pip
     .venv-testdata/bin/python scripts/generate_test_data.py
 
 The output is committed, so most contributors never need to run this.
@@ -14,6 +14,7 @@ from datetime import datetime
 from pathlib import Path
 
 from docx import Document
+from PIL import Image, ImageDraw, ImageFont
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 
@@ -68,6 +69,17 @@ def write_docx(path: Path, title: str, author: str, paragraphs: list[str]) -> No
         else:
             doc.add_paragraph(paragraph)
     doc.save(str(path))
+
+
+def write_receipt_image(path: Path, lines: list[str]) -> None:
+    """A plain receipt-like PNG: dark text on white, for OCR testing."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    font = ImageFont.load_default(size=28)
+    image = Image.new("RGB", (720, 80 + 46 * len(lines)), "white")
+    draw = ImageDraw.Draw(image)
+    for i, line in enumerate(lines):
+        draw.text((40, 40 + 46 * i), line, fill="black", font=font)
+    image.save(path, optimize=False)
 
 
 def write_text(path: Path, text: str, encoding: str = "utf-8") -> None:
@@ -168,6 +180,18 @@ def main() -> None:
         ROOT / "notes" / "Shopping list (UTF-16).txt",
         "Shopping list: tomatoes, peppers, garden gloves, watering can.\n",
         encoding="utf-16",  # writes a byte-order mark, like Windows Notepad's "Unicode"
+    )
+    write_receipt_image(
+        ROOT / "images" / "Headphones receipt.png",
+        [
+            "SOUNDWAVE ELECTRONICS",
+            "14 Market Road, Ikeja",
+            "Date: 12/04/2026",
+            "Wireless headphones   NGN 45,000",
+            "Carrying case         NGN  5,000",
+            "TOTAL                 NGN 50,000",
+            "Paid by card. Thank you!",
+        ],
     )
     print(f"Test data written to {ROOT}")
 

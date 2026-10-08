@@ -227,12 +227,8 @@ fn parse_snippet(marked: &str) -> Vec<SnippetPart> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::database::documents::save_document;
-    use crate::database::files::{upsert, ScannedFile};
-    use crate::database::{locations, test_connection};
-    use crate::extract::{Extracted, Page};
-    use crate::indexing::chunk::chunk_pages;
-    use std::path::Path;
+    use crate::database::test_connection;
+    use crate::test_support::{add_document, add_location};
 
     #[test]
     fn extracts_terms_without_filler_words_or_operators() {
@@ -277,55 +273,13 @@ mod tests {
         );
     }
 
-    /// Index a file whose pages are `pages`, returning its id.
-    fn index(
-        conn: &Connection,
-        location: i64,
-        path: &str,
-        kind: FileKind,
-        pages: &[(Option<u32>, &str)],
-    ) -> i64 {
-        upsert(
-            conn,
-            &ScannedFile {
-                location_id: location,
-                path: Path::new(path),
-                kind,
-                size_bytes: 1,
-                created_at: None,
-                modified_at: Some(1),
-                scanned_at: 1,
-                content_hash: Some(path),
-                error: None,
-            },
-        )
-        .unwrap();
-        let id = conn
-            .query_row("SELECT id FROM files WHERE path = ?1", [path], |r| r.get(0))
-            .unwrap();
-        let extracted = Extracted {
-            pages: pages
-                .iter()
-                .map(|&(number, text)| Page {
-                    number,
-                    text: text.into(),
-                })
-                .collect(),
-            ..Default::default()
-        };
-        let (full, chunks) = chunk_pages(&extracted.pages);
-        save_document(conn, id, &extracted, &full, &chunks, 1).unwrap();
-        id
-    }
-
     fn library() -> (Connection, i64, i64, i64) {
         let conn = test_connection();
-        let loc = locations::insert(&conn, Path::new("/docs"), 0).unwrap().id;
-        let proposal = index(
+        let loc = add_location(&conn);
+        let proposal = add_document(
             &conn,
             loc,
             "/docs/proposal.pdf",
-            FileKind::Pdf,
             &[
                 (Some(1), "Riverside community garden proposal."),
                 (
@@ -334,21 +288,19 @@ mod tests {
                 ),
             ],
         );
-        let lease = index(
+        let lease = add_document(
             &conn,
             loc,
             "/docs/lease.pdf",
-            FileKind::Pdf,
             &[(
                 Some(2),
                 "Give sixty days notice before moving out of the flat.",
             )],
         );
-        let notes = index(
+        let notes = add_document(
             &conn,
             loc,
             "/docs/notes.md",
-            FileKind::Markdown,
             &[(
                 None,
                 "Garden committee: order the water tank. Budgets are tight.",
@@ -375,14 +327,8 @@ mod tests {
     #[test]
     fn passages_with_more_query_words_beat_short_texts_with_fewer() {
         let (conn, proposal, _, _) = library();
-        let loc = locations::list(&conn).unwrap()[0].id;
-        let tiny = index(
-            &conn,
-            loc,
-            "/docs/budget.txt",
-            FileKind::Text,
-            &[(None, "budget notes")],
-        );
+        let loc = crate::database::locations::list(&conn).unwrap()[0].id;
+        let tiny = add_document(&conn, loc, "/docs/budget.txt", &[(None, "budget notes")]);
         let hits = search(&conn, "project budget", 10).unwrap();
         let ids: Vec<i64> = hits.iter().map(|h| h.file_id).collect();
         assert_eq!(ids[0], proposal, "contains both words");

@@ -8,6 +8,7 @@
 //! run them against an in-memory database.
 
 pub mod documents;
+pub mod embeddings;
 pub mod files;
 pub mod locations;
 pub mod migrations;

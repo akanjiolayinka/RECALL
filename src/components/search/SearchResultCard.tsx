@@ -6,10 +6,14 @@ import { useOpenFile } from "@/hooks/useSearch";
 import { errorMessage, type SearchResult } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
 
+/** Labels start at this relevance. Coarse on purpose: the label is a hint, not a measurement. */
+const STRONG = 0.7;
+const GOOD = 0.4;
+
 /** A plain-language label instead of a raw score. */
 function relevanceLabel(relevance: number): string {
-  if (relevance >= 1) return "Strong match";
-  if (relevance >= 0.5) return "Good match";
+  if (relevance >= STRONG) return "Strong match";
+  if (relevance >= GOOD) return "Good match";
   return "Partial match";
 }
 
@@ -35,24 +39,31 @@ export function SearchResultCard({ result, onViewText }: SearchResultCardProps) 
         <span
           className={cn(
             "shrink-0 rounded-full px-2 py-0.5 text-xs font-medium",
-            result.relevance >= 1 ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground",
+            result.relevance >= STRONG ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground",
           )}
         >
           {relevanceLabel(result.relevance)}
         </span>
       </header>
 
-      <blockquote className="border-l-2 pl-3 text-sm leading-relaxed text-foreground/90">
-        {result.snippet.map((part, index) =>
-          part.highlight ? (
-            <mark key={index} className="rounded-sm bg-amber-200/70 px-0.5 text-foreground dark:bg-amber-400/30">
-              {part.text}
-            </mark>
-          ) : (
-            <span key={index}>{part.text}</span>
-          ),
-        )}
-      </blockquote>
+      {result.snippet.length > 0 ? (
+        <blockquote className="border-l-2 pl-3 text-sm leading-relaxed text-foreground/90">
+          {result.snippet.map((part, index) =>
+            part.highlight ? (
+              <mark key={index} className="rounded-sm bg-amber-200/70 px-0.5 text-foreground dark:bg-amber-400/30">
+                {part.text}
+              </mark>
+            ) : (
+              <span key={index}>{part.text}</span>
+            ),
+          )}
+        </blockquote>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          Found by its file name. Recall hasn't read any text from this file
+          {result.fileKind === "image" ? " (images need OCR, which arrives later)." : "."}
+        </p>
+      )}
 
       <footer className="flex flex-wrap items-center gap-2">
         {result.matchReasons.map((reason) => (

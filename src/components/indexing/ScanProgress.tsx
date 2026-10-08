@@ -17,6 +17,8 @@ export function describeScan(scan: ScanStatus | null, fileCount = 0): string {
       return `Checking ${formatCount(scan.filesProcessed)} of ${plural(scan.filesFound, "file")}`;
     case "reading":
       return `Reading ${formatCount(scan.filesRead)} of ${plural(scan.filesToRead, "document")}`;
+    case "embedding":
+      return `Understanding ${formatCount(scan.passagesEmbedded)} of ${plural(scan.passagesToEmbed, "passage")}`;
     case "done": {
       const problems = scan.filesFailed + scan.readFailed;
       const read = scan.filesToRead > 0 ? ` · ${formatCount(scan.filesToRead - scan.readFailed)} read` : "";
@@ -29,7 +31,12 @@ export function describeScan(scan: ScanStatus | null, fileCount = 0): string {
 }
 
 export function isScanning(scan: ScanStatus | null): boolean {
-  return scan?.state === "discovering" || scan?.state === "hashing" || scan?.state === "reading";
+  return (
+    scan?.state === "discovering" ||
+    scan?.state === "hashing" ||
+    scan?.state === "reading" ||
+    scan?.state === "embedding"
+  );
 }
 
 /** 0–100 progress of the current step, or null when the amount is unknown. */
@@ -37,6 +44,8 @@ export function scanPercent(scan: ScanStatus | null): number | null {
   if (scan?.state === "done") return 100;
   if (scan?.state === "hashing" && scan.filesFound > 0) return (scan.filesProcessed / scan.filesFound) * 100;
   if (scan?.state === "reading" && scan.filesToRead > 0) return (scan.filesRead / scan.filesToRead) * 100;
+  if (scan?.state === "embedding" && scan.passagesToEmbed > 0)
+    return (scan.passagesEmbedded / scan.passagesToEmbed) * 100;
   return null;
 }
 
