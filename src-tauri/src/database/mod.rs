@@ -9,6 +9,7 @@
 
 pub mod documents;
 pub mod embeddings;
+pub mod evidence;
 pub mod files;
 pub mod locations;
 pub mod migrations;

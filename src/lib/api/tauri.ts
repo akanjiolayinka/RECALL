@@ -6,6 +6,7 @@ import type {
   ApiError,
   AppInfo,
   DocumentText,
+  Evidence,
   FileListPage,
   Location,
   RecallApi,
@@ -53,6 +54,7 @@ export const tauriApi: RecallApi = {
   search: (request) => call<SearchResult[]>("search", { request }),
   openFile: (fileId) => call<void>("open_file", { fileId }),
   getSearchCapabilities: () => call<SearchCapabilities>("get_search_capabilities"),
+  getEvidence: (passageId) => call<Evidence | null>("get_evidence", { passageId }),
   onScanProgress: async (handler) => {
     if (!isTauri()) return () => {};
     return listen<ScanStatus>(SCAN_PROGRESS_EVENT, (event) => handler(event.payload));

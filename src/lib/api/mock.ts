@@ -10,6 +10,7 @@ import type {
   ApiError,
   AppInfo,
   DocumentText,
+  Evidence,
   FileKind,
   FileListPage,
   FileListQuery,
@@ -198,6 +199,7 @@ export const mockApi: RecallApi = {
         const word = words.find((w) => f.name.toLowerCase().includes(w))!;
         return {
           id: `chunk-${f.id}`,
+          passageId: f.id,
           fileId: f.id,
           fileName: f.name,
           filePath: f.path,
@@ -219,6 +221,22 @@ export const mockApi: RecallApi = {
       semanticSearch: false,
       embeddingModel: null,
       semanticUnavailableReason: "Mock mode: meaning-based search is not simulated.",
+    };
+  },
+
+  async getEvidence(passageId: string): Promise<Evidence | null> {
+    await delay(150);
+    const file = files.find((f) => f.id === passageId);
+    if (!file) return null;
+    return {
+      fileId: file.id,
+      fileName: file.name,
+      filePath: file.path,
+      fileKind: file.kind,
+      page: file.kind === "pdf" ? 2 : null,
+      before: "[Mock text before the passage.] ",
+      passage: `[Mock passage] This sentence stands in for the part of ${file.name} that matched.`,
+      after: " [Mock text after the passage.]",
     };
   },
 

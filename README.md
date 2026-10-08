@@ -34,6 +34,7 @@ what you remember about them, not by filename. All AI runs on your device.
 | File-name and document-title matching (finds images by name) | Working |
 | Hybrid ranking of meaning, keyword and file-name matches | Working for keywords + names; meaning part unit-tested only |
 | Open a result in its default app | Working |
+| Evidence viewer: the matching passage highlighted within its page, with page number and path | Working |
 | Meaning-based search with BAAI/bge-small-en-v1.5 | **Pending**: model not yet downloaded or verified ([checkpoint](docs/MODELS.md)) |
 | OCR for images and scanned PDFs | Not implemented yet |
 
@@ -65,11 +66,11 @@ Recall's index is a single SQLite file, `recall.db`, in the app data folder:
 It contains file paths, sizes, dates and fingerprints — never copies of your
 files. Deleting it resets Recall; your own files are never modified.
 
-### Run the backend tests
+### Run the tests
 
 ```bash
-cd src-tauri
-cargo test
+npm test                 # frontend unit tests (Vitest)
+cd src-tauri && cargo test   # backend unit tests
 ```
 
 ### UI-only mock mode (no Rust needed)
@@ -90,7 +91,7 @@ src/                 React + TypeScript frontend
   pages/             One file per screen
   components/library/ Library screen pieces (folder list, file browser)
   components/indexing/ Scan progress display
-  components/evidence/ Viewer for a file's extracted text
+  components/evidence/ Evidence viewer and extracted-text viewer
   components/search/ Search result card
   hooks/             React hooks that load data through the API client
   lib/api/           The only place the frontend talks to the backend

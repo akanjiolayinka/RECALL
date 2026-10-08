@@ -148,6 +148,8 @@ export interface SnippetPart {
 export interface SearchResult {
   /** Unique per result (the passage id, or the file id for name-only matches). */
   id: string;
+  /** Pass to `getEvidence`; null when only the file name or title matched. */
+  passageId: string | null;
   fileId: string;
   fileName: string;
   filePath: string;
@@ -166,6 +168,21 @@ export interface SearchResult {
   relevance: number;
   /** Plain-language reasons, e.g. `Mentions “budget”`. Safe to show as-is. */
   matchReasons: string[];
+}
+
+/**
+ * The stored text that supports a search result: the passage, with the rest
+ * of its page around it. `before + passage + after` is the page's text.
+ */
+export interface Evidence {
+  fileId: string;
+  fileName: string;
+  filePath: string;
+  fileKind: FileKind;
+  page: number | null;
+  before: string;
+  passage: string;
+  after: string;
 }
 
 /** Which search strategies this installation can use. */
@@ -205,6 +222,11 @@ export interface RecallApi {
   /** Search indexed files. Best matches first, one result per file. */
   search(request: SearchRequest): Promise<SearchResult[]>;
   getSearchCapabilities(): Promise<SearchCapabilities>;
+  /**
+   * The text supporting a result. Null when it can't be located reliably
+   * (e.g. the file was re-indexed since the search) — show that, never guess.
+   */
+  getEvidence(passageId: string): Promise<Evidence | null>;
   /** Open an indexed file in its default app on this computer. */
   openFile(fileId: string): Promise<void>;
   /** Subscribe to live scan progress. Resolves to a function that unsubscribes. */

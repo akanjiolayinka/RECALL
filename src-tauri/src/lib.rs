@@ -50,6 +50,7 @@ pub fn run() {
             commands::search::search,
             commands::search::open_file,
             commands::search::get_search_capabilities,
+            commands::search::get_evidence,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
