@@ -12,14 +12,16 @@ mod scanning;
 mod search;
 #[cfg(test)]
 mod test_support;
+mod watching;
 
 use tauri::Manager;
 
 use database::Database;
 use scanning::{start_scan, ScanStore};
 
-/// Opens the database in the app data folder and re-checks every saved
-/// folder, so changes made while Recall was closed are picked up.
+/// Opens the database in the app data folder, watches every saved folder for
+/// changes, and re-checks them, so changes made while Recall was closed are
+/// picked up too.
 fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     let data_dir = app.path().app_data_dir()?;
     std::fs::create_dir_all(&data_dir)?;
@@ -28,6 +30,8 @@ fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     let locations = database::locations::list(&db.connect()?)?;
     app.manage(db);
     app.manage(ocr::OcrModel::load(&models::candidate_dirs(app.handle())));
+    let folders: Vec<_> = locations.iter().map(|l| l.path.clone()).collect();
+    app.manage(watching::FolderWatcher::start(app.handle(), &folders));
     for location in locations {
         start_scan(app.handle(), location.id, location.path);
     }
@@ -53,6 +57,7 @@ pub fn run() {
             commands::search::search,
             commands::search::open_file,
             commands::app::get_ai_status,
+            commands::app::get_privacy_report,
             commands::search::get_evidence,
         ])
         .run(tauri::generate_context!())

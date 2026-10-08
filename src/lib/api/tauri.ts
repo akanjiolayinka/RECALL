@@ -10,6 +10,7 @@ import type {
   Evidence,
   FileListPage,
   Location,
+  PrivacyReport,
   RecallApi,
   ScanStatus,
   SearchResult,
@@ -54,6 +55,7 @@ export const tauriApi: RecallApi = {
   search: (request) => call<SearchResult[]>("search", { request }),
   openFile: (fileId) => call<void>("open_file", { fileId }),
   getAiStatus: () => call<AiStatus>("get_ai_status"),
+  getPrivacyReport: () => call<PrivacyReport>("get_privacy_report"),
   getEvidence: (passageId) => call<Evidence | null>("get_evidence", { passageId }),
   onScanProgress: async (handler) => {
     if (!isTauri()) return () => {};

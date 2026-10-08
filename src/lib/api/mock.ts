@@ -17,6 +17,7 @@ import type {
   FileListQuery,
   IndexedFile,
   Location,
+  PrivacyReport,
   RecallApi,
   ScanStatus,
   SearchResult,
@@ -66,6 +67,7 @@ async function simulateScan(location: Location) {
     state: "discovering",
     filesFound: 0,
     filesProcessed: 0,
+    filesChanged: 0,
     filesFailed: 0,
     unreadable: 0,
     filesToRead: 0,
@@ -109,6 +111,7 @@ async function simulateScan(location: Location) {
     state: "done",
     filesFound: total,
     filesProcessed: total,
+    filesChanged: total,
     filesToRead: readable,
     filesRead: readable,
   });
@@ -240,6 +243,19 @@ export const mockApi: RecallApi = {
       before: "[Mock text before the passage.] ",
       passage: `[Mock passage] This sentence stands in for the part of ${file.name} that matched.`,
       after: " [Mock text after the passage.]",
+    };
+  },
+
+  async getPrivacyReport(): Promise<PrivacyReport> {
+    await delay(100);
+    return {
+      databasePath: "/mock/app-data/recall.db",
+      databaseBytes: 0,
+      folders: locations.length,
+      files: files.length,
+      documents: files.filter((f) => f.status === "indexed").length,
+      passages: 0,
+      embeddings: 0,
     };
   },
 

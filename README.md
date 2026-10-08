@@ -27,6 +27,7 @@ what you remember about them, not by filename. All AI runs on your device.
 | Find supported files (PDF, DOCX, TXT, MD, PNG, JPG, WEBP) with size, dates and a SHA-256 fingerprint | Working |
 | Remember folders and files between launches (local SQLite database) | Working |
 | Re-check folders at startup and on Rescan; unchanged files aren't re-read | Working |
+| Watch folders: new, changed and deleted files are picked up automatically | Working |
 | Read text from TXT, Markdown, PDF (with page numbers) and DOCX (with title/author); split into passages | Working |
 | View the text Recall extracted from a file | Working |
 | Clear messages for files that can't be read (damaged, password-protected, scanned PDFs, over 100 MB) | Working |
@@ -39,6 +40,8 @@ what you remember about them, not by filename. All AI runs on your device.
 | Meaning-based search with BAAI/bge-small-en-v1.5 | **Pending**: model not yet downloaded or verified ([checkpoint](docs/MODELS.md)) |
 | Read text in images (PNG, JPG, WEBP) with local OCR (ocrs, ~3M parameters) | Working — run `npm run download-models` first |
 | OCR for scanned PDFs | Not implemented yet |
+| Privacy page: local AI status, index location and size, what is stored | Working |
+| Privacy audit (`npm run audit:privacy`): no network client, no cloud AI, locked-down app window | Passing |
 
 ## Requirements
 
@@ -110,14 +113,17 @@ src-tauri/           Rust backend (Tauri)
   src/commands/      Commands the frontend can call (thin adapters)
   src/locations/     Rules for which folders can be added (unit-tested)
   src/files/         Finding, describing, fingerprinting and filtering files (unit-tested)
-  src/scanning.rs    Runs scans in the background, saves results, reports progress
+  src/indexing/pipeline.rs  The indexing pipeline: find, fingerprint, read, embed (unit-tested)
+  src/scanning.rs    Runs the pipeline in the background and reports progress to the UI
+  src/watching.rs    Watches library folders and rescans them when files change
   src/database/      SQLite storage and numbered schema migrations (unit-tested)
   src/extract/       Text extraction for TXT, MD, PDF, DOCX (unit-tested)
-  src/indexing/      Splitting text into searchable passages (unit-tested)
+  src/indexing/      Splitting text into passages, embedding, the pipeline (unit-tested)
   src/search/        Keyword, meaning and file-name search; hybrid ranking (unit-tested)
   src/embeddings/    The Embedder interface for local embedding models (model pending)
   src/ocr/           Reading text in images with the local ocrs engine
 scripts/download-models.mjs  Downloads and verifies model files into models/
+scripts/audit-privacy.mjs    Privacy audit (network libraries, cloud AI, CSP)
 test-data/           Synthetic demo files (see test-data/README.md)
 docs/MODELS.md       AI models: status, verification checklist
 scripts/             Developer scripts (test data generator)

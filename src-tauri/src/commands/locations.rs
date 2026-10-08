@@ -7,6 +7,7 @@ use crate::error::{parse_id, ApiError};
 use crate::files::now_millis;
 use crate::locations::{plan_add, Location, LocationError};
 use crate::scanning::{start_scan, ScanStatus, ScanStore};
+use crate::watching::FolderWatcher;
 
 /// A folder Recall indexes. Mirrors `Location` in src/lib/api/types.ts.
 #[derive(Debug, Serialize)]
@@ -91,6 +92,7 @@ pub async fn add_location(
     app: tauri::AppHandle,
     db: State<'_, Database>,
     scans: State<'_, ScanStore>,
+    watcher: State<'_, FolderWatcher>,
 ) -> Result<Option<AddLocationResponse>, ApiError> {
     // `blocking_pick_folder` must not run on the main thread; async commands
     // run on a background thread, as in the plugin's documented example.
@@ -120,7 +122,9 @@ pub async fn add_location(
 
     for replaced in &plan.replaced {
         scans.forget(replaced.id);
+        watcher.unwatch(&replaced.path);
     }
+    watcher.watch(&location.path);
     start_scan(&app, location.id, location.path.clone());
 
     Ok(Some(AddLocationResponse {
@@ -153,13 +157,16 @@ pub fn remove_location(
     id: String,
     db: State<'_, Database>,
     scans: State<'_, ScanStore>,
+    watcher: State<'_, FolderWatcher>,
 ) -> Result<(), ApiError> {
     let id = parse_location_id(&id)?;
-    // Stop the scan first so it doesn't keep writing rows for this folder.
+    let conn = db.connect()?;
+    let location = database::locations::get(&conn, id)?
+        .ok_or_else(|| ApiError::from(LocationError::UnknownId(id.to_string())))?;
+    // Stop watching and scanning first so nothing keeps writing rows for it.
+    watcher.unwatch(&location.path);
     scans.forget(id);
-    if !database::locations::delete(&db.connect()?, id)? {
-        return Err(LocationError::UnknownId(id.to_string()).into());
-    }
+    database::locations::delete(&conn, id)?;
     Ok(())
 }
 

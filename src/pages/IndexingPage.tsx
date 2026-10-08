@@ -45,7 +45,7 @@ function LocationProgress({ location }: { location: Location }) {
       {scan && (
         <div className="grid grid-cols-5 gap-4 border-t pt-3">
           <Stat label="Files found" value={scan.filesFound} />
-          <Stat label="Files checked" value={scan.filesProcessed} />
+          <Stat label="New or changed" value={scan.filesChanged} />
           <Stat label="Documents read" value={scan.filesRead - scan.readFailed} />
           <Stat label="Couldn't read" value={scan.filesFailed + scan.readFailed} />
           <Stat label="Skipped (no access)" value={scan.unreadable} />
