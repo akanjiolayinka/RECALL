@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Sidebar, type PageId } from "@/components/layout/Sidebar";
 import { useScanEvents } from "@/hooks/useScanEvents";
 import { isMockMode } from "@/lib/api/client";
+import { focusSearchInput, isSearchShortcut } from "@/lib/shortcuts";
 import { IndexingPage } from "@/pages/IndexingPage";
 import { LibraryPage } from "@/pages/LibraryPage";
 import { PrivacyPage } from "@/pages/PrivacyPage";
@@ -18,6 +19,19 @@ const PAGES: Record<PageId, () => React.JSX.Element> = {
 export default function App() {
   const [page, setPage] = useState<PageId>("search");
   useScanEvents();
+
+  // Ctrl+K / ⌘K: go to Search from anywhere and focus the search box.
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (!isSearchShortcut(event)) return;
+      event.preventDefault();
+      setPage("search");
+      // Wait for the Search page to render before focusing its input.
+      requestAnimationFrame(focusSearchInput);
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
   const Page = PAGES[page];
 
   return (

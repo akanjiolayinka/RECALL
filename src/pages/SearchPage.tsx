@@ -11,6 +11,7 @@ import { useLocations } from "@/hooks/useLocations";
 import { useAiStatus } from "@/hooks/useAiStatus";
 import { useSearch } from "@/hooks/useSearch";
 import { errorMessage, type SearchResult } from "@/lib/api/client";
+import { SEARCH_INPUT_ID } from "@/lib/shortcuts";
 import { plural } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -46,6 +47,7 @@ export function SearchPage() {
 
   return (
     <div className={cn("mx-auto flex w-full max-w-3xl flex-col gap-6 transition-[padding]", query ? "pt-4" : "pt-16")}>
+      {query && <h1 className="sr-only">Search results for “{query}”</h1>}
       {!query && (
         <div className="space-y-2 text-center">
           <h1 className="text-3xl font-semibold tracking-tight">What are you trying to remember?</h1>
@@ -62,6 +64,7 @@ export function SearchPage() {
             aria-hidden
           />
           <Input
+            id={SEARCH_INPUT_ID}
             autoFocus
             value={text}
             onChange={(e) => setText(e.target.value)}
