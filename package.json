@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",
     "tauri": "tauri",
-    "test": "vitest run"
+    "test": "vitest run",
+    "download-models": "node scripts/download-models.mjs"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.2.0",

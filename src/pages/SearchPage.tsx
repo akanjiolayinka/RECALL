@@ -8,7 +8,8 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorMessage } from "@/components/ui/error-message";
 import { Input } from "@/components/ui/input";
 import { useLocations } from "@/hooks/useLocations";
-import { useSearch, useSearchCapabilities } from "@/hooks/useSearch";
+import { useAiStatus } from "@/hooks/useAiStatus";
+import { useSearch } from "@/hooks/useSearch";
 import { errorMessage, type SearchResult } from "@/lib/api/client";
 import { plural } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -25,8 +26,9 @@ export function SearchPage() {
   const [query, setQuery] = useState("");
   const [evidenceFor, setEvidenceFor] = useState<SearchResult | null>(null);
   const results = useSearch(query);
-  const capabilities = useSearchCapabilities();
-  const semanticOff = capabilities.data && !capabilities.data.semanticSearch;
+  const aiStatus = useAiStatus();
+  const semantic = aiStatus.data?.semanticSearch;
+  const semanticOff = semantic !== undefined && !semantic.available;
   const locations = useLocations();
   const hasLibrary = (locations.data?.length ?? 0) > 0;
 
@@ -87,10 +89,10 @@ export function SearchPage() {
         </div>
       )}
 
-      {semanticOff && capabilities.data?.semanticUnavailableReason && (
+      {semanticOff && semantic.unavailableReason && (
         <p className="flex items-start gap-2 text-xs text-muted-foreground">
           <Info className="mt-px size-3.5 shrink-0" aria-hidden />
-          {capabilities.data.semanticUnavailableReason}
+          {semantic.unavailableReason}
         </p>
       )}
 

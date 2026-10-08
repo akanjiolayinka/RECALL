@@ -60,8 +60,7 @@ export function SearchResultCard({ result, onShowSource }: SearchResultCardProps
         </blockquote>
       ) : (
         <p className="text-sm text-muted-foreground">
-          Found by its file name. Recall hasn't read any text from this file
-          {result.fileKind === "image" ? " (images need OCR, which arrives later)." : "."}
+          Found by its file name. Recall hasn't read any text from this file.
         </p>
       )}
 

@@ -72,9 +72,9 @@ export function LibraryPage() {
             removingId={removeLocation.isPending ? removeLocation.variables : undefined}
           />
           <p className="text-xs text-muted-foreground">
-            Recall reads the text of PDF, Word, text and Markdown files on this computer. Images
-            are found but not read yet (OCR arrives in Milestone 9). Click a file to see the text
-            Recall extracted.
+            Recall reads the text of PDF, Word, text and Markdown files, and of images with its
+            local OCR model when installed. Everything stays on this computer. Click a file to see
+            the text Recall extracted.
           </p>
           <FileBrowser />
         </>

@@ -22,6 +22,7 @@ use crate::files::scan::{discover, Cancelled, DiscoveredFile};
 use crate::files::{hash::sha256_file, now_millis, unix_millis};
 use crate::indexing::chunk::chunk_pages;
 use crate::indexing::embed::{embed_location, EmbedStop};
+use crate::ocr::{Ocr, OcrModel};
 
 /// Name of the event the UI listens to. Documented in docs/API.md.
 pub const SCAN_PROGRESS_EVENT: &str = "scan-progress";
@@ -315,7 +316,8 @@ fn scan_location(
     tx.commit()?;
 
     // Step 4: read the text of new or changed documents.
-    let pending = database::documents::pending_files(&conn, location_id)?;
+    let ocr = app.state::<OcrModel>().engine.clone();
+    let pending = database::documents::pending_files(&conn, location_id, ocr.is_some())?;
     let to_read = pending.len();
     report(true, &mut |status| {
         status.files_processed = total;
@@ -338,7 +340,7 @@ fn scan_location(
             status.read_failed = read_failed;
             status.current_file = name.clone();
         });
-        if !read_document(&mut conn, &file)? {
+        if !read_document(&mut conn, &file, ocr.as_deref())? {
             read_failed += 1;
         }
     }
@@ -375,8 +377,9 @@ fn scan_location(
 fn read_document(
     conn: &mut rusqlite::Connection,
     file: &database::documents::PendingFile,
+    ocr: Option<&Ocr>,
 ) -> rusqlite::Result<bool> {
-    match extract::extract(&file.path, file.kind) {
+    match extract::extract(&file.path, file.kind, ocr) {
         Ok(extracted) => {
             let (full_text, chunks) = chunk_pages(&extracted.pages);
             let tx = conn.transaction()?;

@@ -33,6 +33,9 @@ rusqlite = { version = "0.40.2", features = ["bundled"] }
 pdf-extract = "0.12.1"
 zip = { version = "5.0.1", default-features = false, features = ["deflate"] }
 quick-xml = "0.41.0"
+ocrs = "0.13"
+rten = "0.26"
+image = { version = "0.25.6", default-features = false, features = ["png", "jpeg", "webp"] }
 
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
@@ -47,15 +50,8 @@ strip = true
 [dev-dependencies]
 tempfile = "3.27.0"
 
-# Hashing is CPU-heavy and very slow without optimisation. Optimise these
-# crates even in `tauri dev` builds so scanning large files stays fast.
-[profile.dev.package.sha2]
-opt-level = 3
-
-[profile.dev.package.digest]
-opt-level = 3
-
-# SQLite is C code compiled by libsqlite3-sys; unoptimised it makes the first
-# scan of a large folder noticeably slow in `tauri dev` builds.
-[profile.dev.package.libsqlite3-sys]
+# Optimise all third-party crates even in `tauri dev` builds. Hashing, SQLite
+# and the OCR engine are very slow unoptimised (ocrs's docs warn about this);
+# Recall's own code stays quick to compile.
+[profile.dev.package."*"]
 opt-level = 3

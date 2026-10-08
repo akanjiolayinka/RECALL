@@ -79,9 +79,9 @@ export function IndexingPage() {
             ))}
           </ul>
           <p className="text-xs text-muted-foreground">
-            Recall finds supported files, fingerprints them to spot changes, and reads the text of
-            PDF, Word, text and Markdown files. Each time it starts it checks your folders again;
-            files that haven't changed aren't re-read. Images wait for OCR (Milestone 9).
+            Recall finds supported files, fingerprints them to spot changes, and reads their text
+            (images with the local OCR model, when installed). Each time it starts it checks your
+            folders again; files that haven't changed aren't re-read.
           </p>
         </>
       )}

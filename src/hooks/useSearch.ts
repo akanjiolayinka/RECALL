@@ -18,15 +18,6 @@ export function useOpenFile() {
   return useMutation({ mutationFn: (fileId: string) => api.openFile(fileId) });
 }
 
-/** Which search strategies are available (e.g. whether an AI model is installed). */
-export function useSearchCapabilities() {
-  return useQuery({
-    queryKey: ["searchCapabilities"],
-    queryFn: () => api.getSearchCapabilities(),
-    staleTime: Infinity,
-  });
-}
-
 /** The stored text supporting a result. Pass null to load nothing. */
 export function useEvidence(passageId: string | null) {
   return useQuery({

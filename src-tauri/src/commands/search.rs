@@ -131,27 +131,6 @@ pub fn open_file(
         })
 }
 
-/// Which search strategies are available. Mirrors `SearchCapabilities` in
-/// src/lib/api/types.ts.
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SearchCapabilities {
-    pub semantic_search: bool,
-    /// Embedding model in use, when semantic search is available.
-    pub embedding_model: Option<String>,
-    /// User-facing reason semantic search is unavailable.
-    pub semantic_unavailable_reason: Option<String>,
-}
-
-#[tauri::command]
-pub fn get_search_capabilities(model: State<'_, EmbeddingModel>) -> SearchCapabilities {
-    SearchCapabilities {
-        semantic_search: model.embedder.is_some(),
-        embedding_model: model.embedder.as_ref().map(|e| e.model_id().to_string()),
-        semantic_unavailable_reason: model.unavailable_reason.clone(),
-    }
-}
-
 /// A passage shown in the context of its page. Mirrors `Evidence` in
 /// src/lib/api/types.ts.
 #[derive(Debug, Serialize)]

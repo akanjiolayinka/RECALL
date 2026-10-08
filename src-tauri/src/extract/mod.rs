@@ -4,7 +4,7 @@
 //! text split into pages where the format has pages (PDF), or one unnumbered
 //! page otherwise (TXT, Markdown, DOCX). No Tauri or database code here.
 //!
-//! Images are not handled here; they need OCR (Milestone 9).
+//! Images are read with OCR (`crate::ocr`) when its models are installed.
 
 mod docx;
 mod pdf;
@@ -15,6 +15,7 @@ use std::path::Path;
 use thiserror::Error;
 
 use crate::files::FileKind;
+use crate::ocr::Ocr;
 
 /// Files larger than this are skipped rather than loaded into memory.
 pub const MAX_FILE_BYTES: u64 = 100 * 1024 * 1024;
@@ -85,18 +86,24 @@ impl ExtractError {
                 _ => "This file couldn't be read.".into(),
             },
             Self::NoText if kind == FileKind::Pdf => {
-                "No text found in this PDF. It may be a scanned document; reading scans arrives with OCR in Milestone 9.".into()
+                "No text found in this PDF. It may be a scanned document; Recall can't read scanned PDFs yet.".into()
             }
+            Self::NoText if kind == FileKind::Image => "No text found in this image.".into(),
             Self::NoText => "This file has no text in it.".into(),
-            Self::NeedsOcr => "Images are read with OCR, which arrives in Milestone 9.".into(),
+            Self::NeedsOcr => "Images are read with OCR, whose model files aren't installed.".into(),
         }
     }
 }
 
-/// Extract the text of a supported file.
-pub fn extract(path: &Path, kind: FileKind) -> Result<Extracted, ExtractError> {
+/// Extract the text of a supported file. Images need `ocr`.
+pub fn extract(path: &Path, kind: FileKind, ocr: Option<&Ocr>) -> Result<Extracted, ExtractError> {
     if kind == FileKind::Image {
-        return Err(ExtractError::NeedsOcr);
+        let extracted = ocr.ok_or(ExtractError::NeedsOcr)?.read_image(path)?;
+        return if extracted.has_text() {
+            Ok(extracted)
+        } else {
+            Err(ExtractError::NoText)
+        };
     }
     let size = std::fs::metadata(path)
         .map_err(|e| ExtractError::Io(e.to_string()))?
@@ -161,7 +168,7 @@ mod tests {
             ),
         ];
         for (file, kind, expected) in cases {
-            let extracted = extract(&test_data(file), kind).unwrap();
+            let extracted = extract(&test_data(file), kind, None).unwrap();
             let all_text: String = extracted.pages.iter().map(|p| p.text.as_str()).collect();
             assert!(
                 all_text.contains(expected),
@@ -175,6 +182,7 @@ mod tests {
         let extracted = extract(
             &test_data("pdf/Project Proposal - Riverside Community Garden.pdf"),
             FileKind::Pdf,
+            None,
         )
         .unwrap();
         assert_eq!(extracted.page_count(), Some(4));
@@ -191,7 +199,8 @@ mod tests {
         assert_eq!(
             extract(
                 &test_data("pdf/Scanned letter (no text layer).pdf"),
-                FileKind::Pdf
+                FileKind::Pdf,
+                None
             ),
             Err(ExtractError::NoText)
         );
@@ -205,11 +214,11 @@ mod tests {
         std::fs::write(&pdf, b"%PDF-1.4 this is not really a pdf").unwrap();
         std::fs::write(&docx, b"PK not really a zip").unwrap();
         assert!(matches!(
-            extract(&pdf, FileKind::Pdf),
+            extract(&pdf, FileKind::Pdf, None),
             Err(ExtractError::Malformed(_))
         ));
         assert!(matches!(
-            extract(&docx, FileKind::Docx),
+            extract(&docx, FileKind::Docx, None),
             Err(ExtractError::Malformed(_))
         ));
     }
@@ -217,7 +226,7 @@ mod tests {
     #[test]
     fn images_wait_for_ocr() {
         assert_eq!(
-            extract(Path::new("photo.png"), FileKind::Image),
+            extract(Path::new("photo.png"), FileKind::Image, None),
             Err(ExtractError::NeedsOcr)
         );
     }
