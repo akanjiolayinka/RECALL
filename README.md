@@ -7,10 +7,10 @@ This project was submitted to the ryze.ai hackathon by Olayinka Akanji.
 Recall is a local-first desktop app for searching the files on your computer by
 what you remember about them, not by filename. All AI runs on your device.
 
-> **Status: early development (Milestone 5 of 15).** You can choose folders;
-> Recall finds supported files, reads the text of PDF, Word, text and Markdown
-> files, and stores it in a local SQLite database. **Search is not
-> implemented yet**, and images are not read yet (OCR comes later).
+> **Status: early development (Milestone 6 of 15).** You can choose folders,
+> Recall reads the text of PDF, Word, text and Markdown files, and **keyword
+> search** finds the passages that mention your words. Searching by meaning
+> (local AI embeddings) and reading images (OCR) are **not implemented yet**.
 > This README only describes what currently works; it will grow as features land.
 
 ## What works today
@@ -28,7 +28,9 @@ what you remember about them, not by filename. All AI runs on your device.
 | View the text Recall extracted from a file | Working |
 | Clear messages for files that can't be read (damaged, password-protected, scanned PDFs, over 100 MB) | Working |
 | Browse and filter found files by name and type; live scan progress | Working |
-| Search (keyword and meaning-based), OCR for images and scanned PDFs, embeddings | Not implemented yet |
+| Keyword search (SQLite FTS5): best passage per file, page number, highlighted snippet, why it matched | Working |
+| Open a result in its default app | Working |
+| Meaning-based search (local embeddings), OCR for images and scanned PDFs | Not implemented yet |
 
 ## Requirements
 
@@ -84,6 +86,7 @@ src/                 React + TypeScript frontend
   components/library/ Library screen pieces (folder list, file browser)
   components/indexing/ Scan progress display
   components/evidence/ Viewer for a file's extracted text
+  components/search/ Search result card
   hooks/             React hooks that load data through the API client
   lib/api/           The only place the frontend talks to the backend
 src-tauri/           Rust backend (Tauri)
@@ -94,6 +97,7 @@ src-tauri/           Rust backend (Tauri)
   src/database/      SQLite storage and numbered schema migrations (unit-tested)
   src/extract/       Text extraction for TXT, MD, PDF, DOCX (unit-tested)
   src/indexing/      Splitting text into searchable passages (unit-tested)
+  src/search/        Keyword search and result ranking (unit-tested)
 test-data/           Synthetic demo files (see test-data/README.md)
 scripts/             Developer scripts (test data generator)
   src/error.rs       The error format every command returns

@@ -6,6 +6,7 @@ mod files;
 mod indexing;
 mod locations;
 mod scanning;
+mod search;
 
 use tauri::Manager;
 
@@ -42,6 +43,8 @@ pub fn run() {
             commands::locations::rescan_location,
             commands::files::list_files,
             commands::files::get_document,
+            commands::search::search,
+            commands::search::open_file,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

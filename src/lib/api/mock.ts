@@ -17,6 +17,7 @@ import type {
   Location,
   RecallApi,
   ScanStatus,
+  SearchResult,
 } from "./types";
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -181,6 +182,38 @@ export const mockApi: RecallApi = {
         text: `[Mock text] This is placeholder text for ${file.name}${number ? `, page ${number}` : ""}. Real text comes from the backend.`,
       })),
     };
+  },
+
+  async search({ query, limit = 20 }): Promise<SearchResult[]> {
+    await delay(200);
+    // Mock matching: file names containing any word of the query.
+    const words = query.toLowerCase().split(/\W+/).filter((w) => w.length > 2);
+    return files
+      .filter((f) => f.status === "indexed" && words.some((w) => f.name.toLowerCase().includes(w)))
+      .slice(0, limit)
+      .map((f, i) => {
+        const word = words.find((w) => f.name.toLowerCase().includes(w))!;
+        return {
+          id: `chunk-${f.id}`,
+          fileId: f.id,
+          fileName: f.name,
+          filePath: f.path,
+          fileKind: f.kind,
+          page: f.kind === "pdf" ? 2 : null,
+          snippet: [
+            { text: "[Mock snippet] …text that mentions ", highlight: false },
+            { text: word, highlight: true },
+            { text: " in a sentence…", highlight: false },
+          ],
+          relevance: 1 / (i + 1),
+          matchReasons: [`Mentions “${word}”`],
+        };
+      });
+  },
+
+  async openFile(fileId: string): Promise<void> {
+    await delay(100);
+    console.info(`[mock] would open file ${fileId}`);
   },
 
   async onScanProgress(handler) {

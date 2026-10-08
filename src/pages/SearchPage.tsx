@@ -1,8 +1,17 @@
 import { useState, type FormEvent } from "react";
-import { Info, Search } from "lucide-react";
+import { FolderPlus, Search, SearchX } from "lucide-react";
 
+import { DocumentViewer, type ViewerFile } from "@/components/evidence/DocumentViewer";
+import { SearchResultCard } from "@/components/search/SearchResultCard";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorMessage } from "@/components/ui/error-message";
 import { Input } from "@/components/ui/input";
+import { useLocations } from "@/hooks/useLocations";
+import { useSearch } from "@/hooks/useSearch";
+import { errorMessage } from "@/lib/api/client";
+import { plural } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 const SUGGESTED_SEARCHES = [
   "Find my project budget",
@@ -12,22 +21,33 @@ const SUGGESTED_SEARCHES = [
 ];
 
 export function SearchPage() {
+  const [text, setText] = useState("");
   const [query, setQuery] = useState("");
-  const [submitted, setSubmitted] = useState<string | null>(null);
+  const [viewing, setViewing] = useState<ViewerFile | null>(null);
+  const results = useSearch(query);
+  const locations = useLocations();
+  const hasLibrary = (locations.data?.length ?? 0) > 0;
+
+  function runSearch(value: string) {
+    setText(value);
+    setQuery(value.trim());
+  }
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    if (query.trim()) setSubmitted(query.trim());
+    runSearch(text);
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-8 pt-16">
-      <div className="space-y-2 text-center">
-        <h1 className="text-3xl font-semibold tracking-tight">What are you trying to remember?</h1>
-        <p className="text-sm text-muted-foreground">
-          Describe it the way you remember it. Everything stays on this computer.
-        </p>
-      </div>
+    <div className={cn("mx-auto flex w-full max-w-3xl flex-col gap-6 transition-[padding]", query ? "pt-4" : "pt-16")}>
+      {!query && (
+        <div className="space-y-2 text-center">
+          <h1 className="text-3xl font-semibold tracking-tight">What are you trying to remember?</h1>
+          <p className="text-sm text-muted-foreground">
+            Describe it the way you remember it. Everything stays on this computer.
+          </p>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="flex gap-2" role="search">
         <div className="relative flex-1">
@@ -37,8 +57,8 @@ export function SearchPage() {
           />
           <Input
             autoFocus
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
             placeholder="e.g. the document about my project budget"
             aria-label="Search your files"
             className="h-11 pl-9"
@@ -49,30 +69,54 @@ export function SearchPage() {
         </Button>
       </form>
 
-      <div className="flex flex-wrap justify-center gap-2">
-        {SUGGESTED_SEARCHES.map((suggestion) => (
-          <Button
-            key={suggestion}
-            variant="outline"
-            size="sm"
-            className="rounded-full font-normal"
-            onClick={() => setQuery(suggestion)}
-          >
-            {suggestion}
-          </Button>
-        ))}
-      </div>
-
-      {submitted && (
-        <div className="flex items-start gap-3 rounded-lg border bg-muted/50 p-4 text-sm" role="status">
-          <Info className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
-          <p>
-            Search isn't built yet, so nothing was searched for “{submitted}”. It arrives once
-            Recall can index your files (keyword search in Milestone 5, meaning-based search in
-            Milestone 6).
-          </p>
+      {!query && (
+        <div className="flex flex-wrap justify-center gap-2">
+          {SUGGESTED_SEARCHES.map((suggestion) => (
+            <Button
+              key={suggestion}
+              variant="outline"
+              size="sm"
+              className="rounded-full font-normal"
+              onClick={() => runSearch(suggestion)}
+            >
+              {suggestion}
+            </Button>
+          ))}
         </div>
       )}
+
+      {locations.data && !hasLibrary ? (
+        <EmptyState
+          icon={FolderPlus}
+          title="Add a folder to search"
+          description="Recall only searches folders you've added in Library. Add one and Recall will read it on this computer."
+        />
+      ) : query && results.error ? (
+        <ErrorMessage message={errorMessage(results.error)} />
+      ) : query && results.data ? (
+        results.data.length === 0 ? (
+          <EmptyState
+            icon={SearchX}
+            title="No matches"
+            description={`None of your indexed files mention the words in “${query}”. Search currently matches words, not meaning — try different words.`}
+          />
+        ) : (
+          <section aria-label="Search results" className={cn("flex flex-col gap-3", results.isPlaceholderData && "opacity-60")}>
+            <p className="text-xs text-muted-foreground">{plural(results.data.length, "matching file")}</p>
+            {results.data.map((result) => (
+              <SearchResultCard
+                key={result.id}
+                result={result}
+                onViewText={(r) => setViewing({ id: r.fileId, name: r.fileName, path: r.filePath })}
+              />
+            ))}
+          </section>
+        )
+      ) : query ? (
+        <p className="text-sm text-muted-foreground">Searching…</p>
+      ) : null}
+
+      <DocumentViewer file={viewing} onClose={() => setViewing(null)} />
     </div>
   );
 }

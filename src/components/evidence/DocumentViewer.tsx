@@ -1,11 +1,20 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ErrorMessage } from "@/components/ui/error-message";
 import { useDocument } from "@/hooks/useDocument";
-import { errorMessage, type IndexedFile } from "@/lib/api/client";
+import { errorMessage } from "@/lib/api/client";
 import { formatCount, plural } from "@/lib/format";
 
+/** The file to show. Only what the viewer needs, so any screen can open it. */
+export interface ViewerFile {
+  id: string;
+  name: string;
+  path: string;
+  /** Why the file couldn't be read, if known. */
+  error?: string | null;
+}
+
 interface DocumentViewerProps {
-  file: IndexedFile | null;
+  file: ViewerFile | null;
   onClose: () => void;
 }
 

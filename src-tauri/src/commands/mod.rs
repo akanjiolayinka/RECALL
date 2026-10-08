@@ -8,3 +8,4 @@
 pub mod app;
 pub mod files;
 pub mod locations;
+pub mod search;
