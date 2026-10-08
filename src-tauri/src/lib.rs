@@ -6,6 +6,8 @@ mod extract;
 mod files;
 mod indexing;
 mod locations;
+mod models;
+mod ocr;
 mod scanning;
 mod search;
 #[cfg(test)]
@@ -25,6 +27,7 @@ fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
 
     let locations = database::locations::list(&db.connect()?)?;
     app.manage(db);
+    app.manage(ocr::OcrModel::load(&models::candidate_dirs(app.handle())));
     for location in locations {
         start_scan(app.handle(), location.id, location.path);
     }
@@ -49,7 +52,7 @@ pub fn run() {
             commands::files::get_document,
             commands::search::search,
             commands::search::open_file,
-            commands::search::get_search_capabilities,
+            commands::app::get_ai_status,
             commands::search::get_evidence,
         ])
         .run(tauri::generate_context!())

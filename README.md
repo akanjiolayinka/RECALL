@@ -12,7 +12,8 @@ what you remember about them, not by filename. All AI runs on your device.
 > in their text and their names. **The local AI model is not installed yet**,
 > so searching by *meaning* is not available — the code for it is built and
 > unit-tested, but has not been tested with the real model (see
-> [docs/MODELS.md](docs/MODELS.md)). Reading images (OCR) is not implemented yet.
+> [docs/MODELS.md](docs/MODELS.md)). Text in images is read with a small local
+> OCR model.
 > This README only describes what currently works; it will grow as features land.
 
 ## What works today
@@ -36,7 +37,8 @@ what you remember about them, not by filename. All AI runs on your device.
 | Open a result in its default app | Working |
 | Evidence viewer: the matching passage highlighted within its page, with page number and path | Working |
 | Meaning-based search with BAAI/bge-small-en-v1.5 | **Pending**: model not yet downloaded or verified ([checkpoint](docs/MODELS.md)) |
-| OCR for images and scanned PDFs | Not implemented yet |
+| Read text in images (PNG, JPG, WEBP) with local OCR (ocrs, ~3M parameters) | Working — run `npm run download-models` first |
+| OCR for scanned PDFs | Not implemented yet |
 
 ## Requirements
 
@@ -52,6 +54,15 @@ npm run tauri dev
 ```
 
 The first run compiles the Rust backend and takes a few minutes.
+
+### Install the local AI models
+
+```bash
+npm run download-models
+```
+
+Downloads the OCR model files (about 12 MB) into `models/` and verifies their
+checksums. See [docs/MODELS.md](docs/MODELS.md) for exactly what is downloaded.
 
 ### Where Recall keeps its data
 
@@ -105,6 +116,8 @@ src-tauri/           Rust backend (Tauri)
   src/indexing/      Splitting text into searchable passages (unit-tested)
   src/search/        Keyword, meaning and file-name search; hybrid ranking (unit-tested)
   src/embeddings/    The Embedder interface for local embedding models (model pending)
+  src/ocr/           Reading text in images with the local ocrs engine
+scripts/download-models.mjs  Downloads and verifies model files into models/
 test-data/           Synthetic demo files (see test-data/README.md)
 docs/MODELS.md       AI models: status, verification checklist
 scripts/             Developer scripts (test data generator)

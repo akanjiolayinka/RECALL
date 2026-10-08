@@ -185,13 +185,21 @@ export interface Evidence {
   after: string;
 }
 
-/** Which search strategies this installation can use. */
-export interface SearchCapabilities {
-  /** True when a local embedding model is installed (meaning-based search). */
-  semanticSearch: boolean;
-  embeddingModel: string | null;
-  /** User-facing reason meaning-based search is unavailable. */
-  semanticUnavailableReason: string | null;
+/** Whether one local AI feature is working on this computer. */
+export interface AiFeatureStatus {
+  available: boolean;
+  /** The model in use, when available. */
+  model: string | null;
+  /** User-facing reason, when unavailable. Safe to show as-is. */
+  unavailableReason: string | null;
+}
+
+/** Status of Recall's local AI features. */
+export interface AiStatus {
+  /** Meaning-based search (local embedding model). */
+  semanticSearch: AiFeatureStatus;
+  /** Reading text in images (local OCR model). */
+  ocr: AiFeatureStatus;
 }
 
 /** Call to stop listening to an event. */
@@ -221,7 +229,7 @@ export interface RecallApi {
   getDocument(fileId: string): Promise<DocumentText | null>;
   /** Search indexed files. Best matches first, one result per file. */
   search(request: SearchRequest): Promise<SearchResult[]>;
-  getSearchCapabilities(): Promise<SearchCapabilities>;
+  getAiStatus(): Promise<AiStatus>;
   /**
    * The text supporting a result. Null when it can't be located reliably
    * (e.g. the file was re-indexed since the search) — show that, never guess.

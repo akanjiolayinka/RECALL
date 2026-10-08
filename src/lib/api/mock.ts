@@ -7,6 +7,7 @@
  */
 import type {
   AddLocationResult,
+  AiStatus,
   ApiError,
   AppInfo,
   DocumentText,
@@ -18,7 +19,6 @@ import type {
   Location,
   RecallApi,
   ScanStatus,
-  SearchCapabilities,
   SearchResult,
 } from "./types";
 
@@ -216,11 +216,14 @@ export const mockApi: RecallApi = {
       });
   },
 
-  async getSearchCapabilities(): Promise<SearchCapabilities> {
+  async getAiStatus(): Promise<AiStatus> {
     return {
-      semanticSearch: false,
-      embeddingModel: null,
-      semanticUnavailableReason: "Mock mode: meaning-based search is not simulated.",
+      semanticSearch: {
+        available: false,
+        model: null,
+        unavailableReason: "Mock mode: meaning-based search is not simulated.",
+      },
+      ocr: { available: false, model: null, unavailableReason: "Mock mode: OCR is not simulated." },
     };
   },
 

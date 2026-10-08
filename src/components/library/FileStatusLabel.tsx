@@ -1,9 +1,11 @@
 import { CircleCheck, Clock, TriangleAlert } from "lucide-react";
 
+import { useAiStatus } from "@/hooks/useAiStatus";
 import type { IndexedFile } from "@/lib/api/client";
 
 /** Short label for where a file is in Recall's pipeline. */
 export function FileStatusLabel({ file }: { file: IndexedFile }) {
+  const ocrAvailable = useAiStatus().data?.ocr.available ?? false;
   if (file.status === "indexed") {
     return (
       <span className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400">
@@ -23,7 +25,7 @@ export function FileStatusLabel({ file }: { file: IndexedFile }) {
   return (
     <span className="flex items-center gap-1.5 text-muted-foreground">
       <Clock className="size-3.5" aria-hidden />
-      {file.kind === "image" ? "Needs OCR" : "Waiting"}
+      {file.kind === "image" && !ocrAvailable ? "Needs OCR" : "Waiting"}
     </span>
   );
 }

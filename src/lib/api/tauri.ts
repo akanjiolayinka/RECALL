@@ -3,6 +3,7 @@ import { listen } from "@tauri-apps/api/event";
 
 import type {
   AddLocationResult,
+  AiStatus,
   ApiError,
   AppInfo,
   DocumentText,
@@ -11,7 +12,6 @@ import type {
   Location,
   RecallApi,
   ScanStatus,
-  SearchCapabilities,
   SearchResult,
 } from "./types";
 
@@ -53,7 +53,7 @@ export const tauriApi: RecallApi = {
   getDocument: (fileId) => call<DocumentText | null>("get_document", { fileId }),
   search: (request) => call<SearchResult[]>("search", { request }),
   openFile: (fileId) => call<void>("open_file", { fileId }),
-  getSearchCapabilities: () => call<SearchCapabilities>("get_search_capabilities"),
+  getAiStatus: () => call<AiStatus>("get_ai_status"),
   getEvidence: (passageId) => call<Evidence | null>("get_evidence", { passageId }),
   onScanProgress: async (handler) => {
     if (!isTauri()) return () => {};

@@ -16,17 +16,23 @@ pub struct PendingFile {
     pub kind: FileKind,
 }
 
-/// Files in a location waiting to be read. Images are left for OCR.
-pub fn pending_files(conn: &Connection, location_id: i64) -> rusqlite::Result<Vec<PendingFile>> {
+/// Files in a location waiting to be read. Images are included only when
+/// they can be read (OCR is available); otherwise they stay pending.
+pub fn pending_files(
+    conn: &Connection,
+    location_id: i64,
+    include_images: bool,
+) -> rusqlite::Result<Vec<PendingFile>> {
     let mut stmt = conn.prepare(
         "SELECT id, path, kind FROM files
-         WHERE location_id = ?1 AND status = ?2 AND kind != ?3
+         WHERE location_id = ?1 AND status = ?2 AND (?3 OR kind != ?4)
          ORDER BY modified_at DESC NULLS LAST",
     )?;
     let rows = stmt.query_map(
         params![
             location_id,
             FileStatus::Pending.as_str(),
+            include_images,
             FileKind::Image.as_str()
         ],
         |row| {
@@ -235,8 +241,13 @@ mod tests {
         let md = add_file(&conn, loc, "/a/n.md", FileKind::Markdown);
         mark_unreadable(&conn, md, "broken").unwrap();
 
-        let pending = pending_files(&conn, loc).unwrap();
+        let pending = pending_files(&conn, loc, false).unwrap();
         assert_eq!(pending.iter().map(|p| p.id).collect::<Vec<_>>(), vec![pdf]);
+        assert_eq!(
+            pending_files(&conn, loc, true).unwrap().len(),
+            2,
+            "with OCR, images too"
+        );
     }
 
     #[test]
@@ -272,7 +283,7 @@ mod tests {
             })
             .unwrap();
         assert_eq!(status, "indexed");
-        assert!(pending_files(&conn, loc).unwrap().is_empty());
+        assert!(pending_files(&conn, loc, false).unwrap().is_empty());
     }
 
     #[test]
