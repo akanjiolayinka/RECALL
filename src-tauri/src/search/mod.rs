@@ -87,6 +87,14 @@ pub fn search(
     limit: usize,
 ) -> rusqlite::Result<Vec<SearchResult>> {
     let terms = keyword::query_terms(query);
+    let typed = keyword::typed_forms(query);
+    let quote_list = |terms: &[String]| {
+        terms
+            .iter()
+            .map(|t| format!("“{}”", typed.get(t).unwrap_or(t)))
+            .collect::<Vec<_>>()
+            .join(", ")
+    };
     let keyword_hits = keyword::search(conn, query, usize::MAX)?;
     let metadata_hits = metadata::search(conn, &terms)?;
     let semantic_hits = match embedder {
@@ -187,14 +195,6 @@ pub fn combine(signals: &Signals, semantic_available: bool) -> f64 {
         + w.keyword * signals.keyword.unwrap_or(0.0)
         + w.metadata * signals.metadata.unwrap_or(0.0);
     total / (w.semantic + w.keyword + w.metadata)
-}
-
-fn quote_list(terms: &[String]) -> String {
-    terms
-        .iter()
-        .map(|t| format!("“{t}”"))
-        .collect::<Vec<_>>()
-        .join(", ")
 }
 
 /// Collapse whitespace and cut at a word boundary.
@@ -390,6 +390,14 @@ mod tests {
         );
         let hits = search(&lib.conn, None, "headphone receipt", 10).unwrap();
         assert_eq!(hits[0].file_id, lib.receipt);
+    }
+
+    #[test]
+    fn reasons_show_words_as_the_user_typed_them() {
+        let lib = library();
+        let hits = search(&lib.conn, None, "NGN 2,500,000", 10).unwrap();
+        assert_eq!(hits[0].file_id, lib.proposal);
+        assert_eq!(hits[0].match_reasons, vec!["Mentions “NGN”, “2,500,000”"]);
     }
 
     #[test]

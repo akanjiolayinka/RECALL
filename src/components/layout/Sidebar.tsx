@@ -1,5 +1,6 @@
 import { Activity, Library, Search, ShieldCheck, type LucideIcon } from "lucide-react";
 
+import { SEARCH_SHORTCUT_LABEL } from "@/lib/shortcuts";
 import { cn } from "@/lib/utils";
 
 import { BackendStatus } from "./BackendStatus";
@@ -40,6 +41,11 @@ export function Sidebar({ current, onNavigate }: SidebarProps) {
           >
             <Icon className="size-4" aria-hidden />
             {label}
+            {id === "search" && (
+              <kbd className="ml-auto rounded border bg-background px-1.5 font-sans text-[10px] text-muted-foreground">
+                {SEARCH_SHORTCUT_LABEL}
+              </kbd>
+            )}
           </button>
         ))}
       </nav>

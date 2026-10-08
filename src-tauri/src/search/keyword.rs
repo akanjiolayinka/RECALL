@@ -1,5 +1,6 @@
 //! Keyword search using SQLite FTS5 (see migration 0002).
 
+use std::collections::HashMap;
 use std::path::PathBuf;
 
 use rusqlite::{params, Connection};
@@ -80,6 +81,24 @@ pub fn query_terms(input: &str) -> Vec<String> {
     };
     chosen.truncate(MAX_TERMS);
     chosen
+}
+
+/// How each term from `query_terms` was typed, for showing to the user:
+/// "2 500 000" was typed "2,500,000". Surrounding punctuation is dropped.
+pub fn typed_forms(input: &str) -> HashMap<String, String> {
+    input
+        .split_whitespace()
+        .filter_map(|word| {
+            let typed = word.trim_matches(|c: char| !c.is_alphanumeric());
+            let term = typed
+                .split(|c: char| !c.is_alphanumeric())
+                .filter(|piece| !piece.is_empty())
+                .map(str::to_lowercase)
+                .collect::<Vec<_>>()
+                .join(" ");
+            (!term.is_empty()).then(|| (term, typed.to_string()))
+        })
+        .collect()
 }
 
 /// A safe FTS5 expression for one term: quoted, so punctuation and FTS5
@@ -249,6 +268,14 @@ mod tests {
             any_of(&query_terms("garden (budget")),
             "\"garden\" OR \"budget\""
         );
+    }
+
+    #[test]
+    fn remembers_how_terms_were_typed() {
+        let forms = typed_forms("NGN 2,500,000 (budget)?");
+        assert_eq!(forms["2 500 000"], "2,500,000");
+        assert_eq!(forms["budget"], "budget");
+        assert_eq!(forms["ngn"], "NGN");
     }
 
     #[test]
