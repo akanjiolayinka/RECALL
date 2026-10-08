@@ -4,6 +4,8 @@ version = "0.1.0"
 description = "Recall: your private AI memory. Everything searchable. Nothing uploaded."
 authors = ["Recall contributors"]
 edition = "2021"
+# Oldest Rust version known to build Recall (uses Option::is_none_or).
+rust-version = "1.82"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -25,6 +27,8 @@ serde_json = "1"
 tauri-plugin-dialog = "2"
 thiserror = "2.0.21"
 dunce = "1.0.5"
+walkdir = "2.5.0"
+sha2 = "0.11.0"
 
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
@@ -37,3 +41,11 @@ strip = true
 
 [dev-dependencies]
 tempfile = "3.27.0"
+
+# Hashing is CPU-heavy and very slow without optimisation. Optimise these
+# crates even in `tauri dev` builds so scanning large files stays fast.
+[profile.dev.package.sha2]
+opt-level = 3
+
+[profile.dev.package.digest]
+opt-level = 3

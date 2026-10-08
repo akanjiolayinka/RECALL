@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import { Sidebar, type PageId } from "@/components/layout/Sidebar";
+import { useScanEvents } from "@/hooks/useScanEvents";
 import { isMockMode } from "@/lib/api/client";
 import { IndexingPage } from "@/pages/IndexingPage";
 import { LibraryPage } from "@/pages/LibraryPage";
@@ -16,6 +17,7 @@ const PAGES: Record<PageId, () => React.JSX.Element> = {
 
 export default function App() {
   const [page, setPage] = useState<PageId>("search");
+  useScanEvents();
   const Page = PAGES[page];
 
   return (
