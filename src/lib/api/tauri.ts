@@ -10,6 +10,7 @@ import type {
   Location,
   RecallApi,
   ScanStatus,
+  SearchResult,
 } from "./types";
 
 /** Backend event names. Must match the constants in src-tauri/src/. */
@@ -48,6 +49,8 @@ export const tauriApi: RecallApi = {
   rescanLocation: (id) => call<void>("rescan_location", { id }),
   listFiles: (query) => call<FileListPage>("list_files", { query: query ?? null }),
   getDocument: (fileId) => call<DocumentText | null>("get_document", { fileId }),
+  search: (request) => call<SearchResult[]>("search", { request }),
+  openFile: (fileId) => call<void>("open_file", { fileId }),
   onScanProgress: async (handler) => {
     if (!isTauri()) return () => {};
     return listen<ScanStatus>(SCAN_PROGRESS_EVENT, (event) => handler(event.payload));

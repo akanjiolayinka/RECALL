@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
-use rusqlite::{params, Connection};
+use rusqlite::{params, Connection, OptionalExtension};
 
 use crate::files::kind::mime_type;
 use crate::files::{FileKind, FileRecord, FileStatus};
@@ -122,6 +122,15 @@ pub fn upsert(conn: &Connection, file: &ScannedFile<'_>) -> rusqlite::Result<()>
         ],
     )?;
     Ok(())
+}
+
+/// Where a file is on disk, or `None` if it isn't in the index.
+pub fn path(conn: &Connection, id: i64) -> rusqlite::Result<Option<PathBuf>> {
+    conn.query_row("SELECT path FROM files WHERE id = ?1", [id], |row| {
+        row.get::<_, String>(0)
+    })
+    .optional()
+    .map(|path| path.map(PathBuf::from))
 }
 
 pub fn delete(conn: &Connection, id: i64) -> rusqlite::Result<()> {

@@ -8,7 +8,10 @@
 
 use rusqlite::Connection;
 
-const MIGRATIONS: &[&str] = &[include_str!("migrations/0001_initial.sql")];
+const MIGRATIONS: &[&str] = &[
+    include_str!("migrations/0001_initial.sql"),
+    include_str!("migrations/0002_keyword_search.sql"),
+];
 
 #[derive(Debug, thiserror::Error)]
 pub enum MigrationError {
@@ -51,7 +54,11 @@ mod tests {
 
     fn table_names(conn: &Connection) -> Vec<String> {
         let mut stmt = conn
-            .prepare("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name")
+            // FTS5 also creates internal "shadow" tables (chunks_fts_data, ...).
+            .prepare(
+                "SELECT name FROM sqlite_master WHERE type = 'table'
+                 AND name NOT LIKE 'chunks_fts_%' ORDER BY name",
+            )
             .unwrap();
         stmt.query_map([], |row| row.get(0))
             .unwrap()
@@ -66,8 +73,42 @@ mod tests {
         assert_eq!(current_version(&conn).unwrap(), LATEST_VERSION);
         assert_eq!(
             table_names(&conn),
-            vec!["chunks", "documents", "embeddings", "files", "locations"]
+            vec![
+                "chunks",
+                "chunks_fts",
+                "documents",
+                "embeddings",
+                "files",
+                "locations"
+            ]
         );
+    }
+
+    #[test]
+    fn upgrading_indexes_chunks_that_already_exist() {
+        let mut conn = Connection::open_in_memory().unwrap();
+        conn.execute_batch(MIGRATIONS[0]).unwrap();
+        conn.pragma_update(None, "user_version", 1).unwrap();
+        conn.execute_batch(
+            "INSERT INTO locations VALUES (1, '/a', 0);
+             INSERT INTO files (id, location_id, path, filename, extension, kind, mime_type,
+                                size_bytes, scanned_at, status)
+                 VALUES (1, 1, '/a/n.txt', 'n.txt', 'txt', 'text', 'text/plain', 1, 0, 'indexed');
+             INSERT INTO documents (id, file_id, extracted_text) VALUES (1, 1, 'garden budget');
+             INSERT INTO chunks (document_id, chunk_index, text, char_start, char_end)
+                 VALUES (1, 0, 'garden budget', 0, 13);",
+        )
+        .unwrap();
+
+        run(&mut conn).unwrap();
+        let hits: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM chunks_fts WHERE chunks_fts MATCH 'budget'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(hits, 1);
     }
 
     #[test]

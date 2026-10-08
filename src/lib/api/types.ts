@@ -129,6 +129,39 @@ export interface DocumentText {
   pages: DocumentPage[];
 }
 
+export interface SearchRequest {
+  query: string;
+  /** Maximum number of results (default 20, maximum 50). */
+  limit?: number;
+}
+
+/** Part of a result snippet; `highlight` marks words that matched the search. */
+export interface SnippetPart {
+  text: string;
+  highlight: boolean;
+}
+
+/** A file that matched a search, with its best-matching passage. */
+export interface SearchResult {
+  /** Id of the matching passage. */
+  id: string;
+  fileId: string;
+  fileName: string;
+  filePath: string;
+  fileKind: FileKind;
+  /** Page of the passage, for formats with pages. */
+  page: number | null;
+  /** The matching passage, shortened around the matches. */
+  snippet: SnippetPart[];
+  /**
+   * 0–1 relevance for display; not comparable across searches. Today this is
+   * the share of the search's words found in the passage (1 = all of them).
+   */
+  relevance: number;
+  /** Plain-language reasons, e.g. `Mentions “budget”`. Safe to show as-is. */
+  matchReasons: string[];
+}
+
 /** Call to stop listening to an event. */
 export type Unsubscribe = () => void;
 
@@ -154,6 +187,10 @@ export interface RecallApi {
   listFiles(query?: FileListQuery): Promise<FileListPage>;
   /** The text extracted from a file, or null if it hasn't been read. */
   getDocument(fileId: string): Promise<DocumentText | null>;
+  /** Search the text of indexed files. Best matches first, one result per file. */
+  search(request: SearchRequest): Promise<SearchResult[]>;
+  /** Open an indexed file in its default app on this computer. */
+  openFile(fileId: string): Promise<void>;
   /** Subscribe to live scan progress. Resolves to a function that unsubscribes. */
   onScanProgress(handler: (status: ScanStatus) => void): Promise<Unsubscribe>;
 }
