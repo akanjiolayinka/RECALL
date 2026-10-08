@@ -1,7 +1,9 @@
 mod commands;
 mod database;
 mod error;
+mod extract;
 mod files;
+mod indexing;
 mod locations;
 mod scanning;
 
@@ -39,6 +41,7 @@ pub fn run() {
             commands::locations::remove_location,
             commands::locations::rescan_location,
             commands::files::list_files,
+            commands::files::get_document,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

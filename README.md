@@ -7,9 +7,10 @@ This project was submitted to the ryze.ai hackathon by Olayinka Akanji.
 Recall is a local-first desktop app for searching the files on your computer by
 what you remember about them, not by filename. All AI runs on your device.
 
-> **Status: early development (Milestone 4 of 15).** You can choose folders;
-> Recall finds the supported files in them and remembers them in a local
-> SQLite database. Reading file contents and search are **not implemented yet**.
+> **Status: early development (Milestone 5 of 15).** You can choose folders;
+> Recall finds supported files, reads the text of PDF, Word, text and Markdown
+> files, and stores it in a local SQLite database. **Search is not
+> implemented yet**, and images are not read yet (OCR comes later).
 > This README only describes what currently works; it will grow as features land.
 
 ## What works today
@@ -23,8 +24,11 @@ what you remember about them, not by filename. All AI runs on your device.
 | Find supported files (PDF, DOCX, TXT, MD, PNG, JPG, WEBP) with size, dates and a SHA-256 fingerprint | Working |
 | Remember folders and files between launches (local SQLite database) | Working |
 | Re-check folders at startup and on Rescan; unchanged files aren't re-read | Working |
+| Read text from TXT, Markdown, PDF (with page numbers) and DOCX (with title/author); split into passages | Working |
+| View the text Recall extracted from a file | Working |
+| Clear messages for files that can't be read (damaged, password-protected, scanned PDFs, over 100 MB) | Working |
 | Browse and filter found files by name and type; live scan progress | Working |
-| Reading file contents, search, OCR, embeddings | Not implemented yet |
+| Search (keyword and meaning-based), OCR for images and scanned PDFs, embeddings | Not implemented yet |
 
 ## Requirements
 
@@ -79,6 +83,7 @@ src/                 React + TypeScript frontend
   pages/             One file per screen
   components/library/ Library screen pieces (folder list, file browser)
   components/indexing/ Scan progress display
+  components/evidence/ Viewer for a file's extracted text
   hooks/             React hooks that load data through the API client
   lib/api/           The only place the frontend talks to the backend
 src-tauri/           Rust backend (Tauri)
@@ -87,5 +92,9 @@ src-tauri/           Rust backend (Tauri)
   src/files/         Finding, describing, fingerprinting and filtering files (unit-tested)
   src/scanning.rs    Runs scans in the background, saves results, reports progress
   src/database/      SQLite storage and numbered schema migrations (unit-tested)
+  src/extract/       Text extraction for TXT, MD, PDF, DOCX (unit-tested)
+  src/indexing/      Splitting text into searchable passages (unit-tested)
+test-data/           Synthetic demo files (see test-data/README.md)
+scripts/             Developer scripts (test data generator)
   src/error.rs       The error format every command returns
 ```

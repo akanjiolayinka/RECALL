@@ -1,15 +1,17 @@
 import { useEffect, useState } from "react";
 import { Search, TriangleAlert } from "lucide-react";
 
+import { DocumentViewer } from "@/components/evidence/DocumentViewer";
 import { Button } from "@/components/ui/button";
 import { ErrorMessage } from "@/components/ui/error-message";
 import { Input } from "@/components/ui/input";
 import { useFiles } from "@/hooks/useFiles";
-import { errorMessage, type FileKind } from "@/lib/api/client";
+import { errorMessage, type FileKind, type IndexedFile } from "@/lib/api/client";
 import { formatBytes, formatCount, formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 import { FILE_KIND_LABELS, FileKindIcon } from "./FileKindIcon";
+import { FileStatusLabel } from "./FileStatusLabel";
 
 const KIND_FILTERS: (FileKind | undefined)[] = [undefined, "pdf", "docx", "text", "markdown", "image"];
 const PAGE_SIZE = 200;
@@ -20,6 +22,7 @@ export function FileBrowser() {
   const [kind, setKind] = useState<FileKind | undefined>();
   const [text, setText] = useState("");
   const [nameContains, setNameContains] = useState("");
+  const [openFile, setOpenFile] = useState<IndexedFile | null>(null);
 
   // Wait until the user pauses typing before asking the backend.
   useEffect(() => {
@@ -78,18 +81,25 @@ export function FileBrowser() {
                 <tr>
                   <th className="px-4 py-2 font-medium">Name</th>
                   <th className="w-24 px-4 py-2 font-medium">Type</th>
+                  <th className="w-32 px-4 py-2 font-medium">Status</th>
                   <th className="w-28 px-4 py-2 text-right font-medium">Size</th>
                   <th className="w-32 px-4 py-2 font-medium">Modified</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {files.data.files.map((file) => (
-                  <tr key={file.id}>
+                  <tr key={file.id} className="hover:bg-muted/40">
                     <td className="px-4 py-2">
                       <div className="flex items-center gap-2.5">
                         <FileKindIcon kind={file.kind} className="size-4 shrink-0 text-muted-foreground" />
                         <div className="min-w-0">
-                          <p className="truncate">{file.name}</p>
+                          <button
+                            type="button"
+                            onClick={() => setOpenFile(file)}
+                            className="block max-w-full truncate text-left outline-none hover:underline focus-visible:underline"
+                          >
+                            {file.name}
+                          </button>
                           <p className="truncate text-xs text-muted-foreground" title={file.path}>
                             {file.path}
                           </p>
@@ -103,6 +113,9 @@ export function FileBrowser() {
                       </div>
                     </td>
                     <td className="px-4 py-2 text-muted-foreground">{FILE_KIND_LABELS[file.kind]}</td>
+                    <td className="px-4 py-2 text-xs">
+                      <FileStatusLabel file={file} />
+                    </td>
                     <td className="px-4 py-2 text-right whitespace-nowrap text-muted-foreground tabular-nums">
                       {formatBytes(file.sizeBytes)}
                     </td>
@@ -119,6 +132,7 @@ export function FileBrowser() {
           </p>
         </>
       )}
+      <DocumentViewer file={openFile} onClose={() => setOpenFile(null)} />
     </section>
   );
 }

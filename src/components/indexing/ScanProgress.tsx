@@ -15,10 +15,13 @@ export function describeScan(scan: ScanStatus | null, fileCount = 0): string {
       return `Looking for files… ${plural(scan.filesFound, "file")} found`;
     case "hashing":
       return `Checking ${formatCount(scan.filesProcessed)} of ${plural(scan.filesFound, "file")}`;
+    case "reading":
+      return `Reading ${formatCount(scan.filesRead)} of ${plural(scan.filesToRead, "document")}`;
     case "done": {
-      const readable = scan.filesFound - scan.filesFailed;
-      const problems = scan.filesFailed > 0 ? ` · ${formatCount(scan.filesFailed)} couldn't be read` : "";
-      return `${plural(readable, "file")} found${problems}`;
+      const problems = scan.filesFailed + scan.readFailed;
+      const read = scan.filesToRead > 0 ? ` · ${formatCount(scan.filesToRead - scan.readFailed)} read` : "";
+      const failed = problems > 0 ? ` · ${formatCount(problems)} couldn't be read` : "";
+      return `${plural(scan.filesFound, "file")} found${read}${failed}`;
     }
     case "failed":
       return scan.error ?? "Scanning failed.";
@@ -26,7 +29,15 @@ export function describeScan(scan: ScanStatus | null, fileCount = 0): string {
 }
 
 export function isScanning(scan: ScanStatus | null): boolean {
-  return scan?.state === "discovering" || scan?.state === "hashing";
+  return scan?.state === "discovering" || scan?.state === "hashing" || scan?.state === "reading";
+}
+
+/** 0–100 progress of the current step, or null when the amount is unknown. */
+export function scanPercent(scan: ScanStatus | null): number | null {
+  if (scan?.state === "done") return 100;
+  if (scan?.state === "hashing" && scan.filesFound > 0) return (scan.filesProcessed / scan.filesFound) * 100;
+  if (scan?.state === "reading" && scan.filesToRead > 0) return (scan.filesRead / scan.filesToRead) * 100;
+  return null;
 }
 
 /** Status line plus progress bar while a scan is running. */
@@ -37,10 +48,7 @@ interface ScanProgressProps {
 }
 
 export function ScanProgress({ scan, fileCount, className }: ScanProgressProps) {
-  const percent =
-    scan?.state === "hashing" && scan.filesFound > 0
-      ? (scan.filesProcessed / scan.filesFound) * 100
-      : null;
+  const percent = scanPercent(scan);
 
   return (
     <div className={cn("space-y-1.5", className)}>

@@ -39,3 +39,7 @@ models/
 *.sqlite
 *.sqlite3
 .cache/
+
+# Python virtual environments for dev scripts (e.g. scripts/generate_test_data.py)
+.venv*/
+__pycache__/

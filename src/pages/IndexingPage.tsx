@@ -1,7 +1,7 @@
 import { Activity, Folder } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/PageHeader";
-import { describeScan, isScanning } from "@/components/indexing/ScanProgress";
+import { describeScan, isScanning, scanPercent } from "@/components/indexing/ScanProgress";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorMessage } from "@/components/ui/error-message";
 import { Progress } from "@/components/ui/progress";
@@ -20,12 +20,7 @@ function Stat({ label, value }: { label: string; value: number }) {
 
 function LocationProgress({ location }: { location: Location }) {
   const scan = location.scan;
-  const percent =
-    scan?.state === "done"
-      ? 100
-      : scan?.state === "hashing" && scan.filesFound > 0
-        ? (scan.filesProcessed / scan.filesFound) * 100
-        : null;
+  const percent = scanPercent(scan);
 
   return (
     <li className="space-y-3 rounded-xl border bg-card p-4">
@@ -48,10 +43,11 @@ function LocationProgress({ location }: { location: Location }) {
         </>
       )}
       {scan && (
-        <div className="grid grid-cols-4 gap-4 border-t pt-3">
+        <div className="grid grid-cols-5 gap-4 border-t pt-3">
           <Stat label="Files found" value={scan.filesFound} />
           <Stat label="Files checked" value={scan.filesProcessed} />
-          <Stat label="Couldn't read" value={scan.filesFailed} />
+          <Stat label="Documents read" value={scan.filesRead - scan.readFailed} />
+          <Stat label="Couldn't read" value={scan.filesFailed + scan.readFailed} />
           <Stat label="Skipped (no access)" value={scan.unreadable} />
         </div>
       )}
@@ -83,9 +79,9 @@ export function IndexingPage() {
             ))}
           </ul>
           <p className="text-xs text-muted-foreground">
-            Recall finds supported files and fingerprints them so it can spot changes. Each time it
-            starts, it checks your folders again; files that haven't changed aren't re-read. Reading
-            the text inside files arrives in Milestone 5.
+            Recall finds supported files, fingerprints them to spot changes, and reads the text of
+            PDF, Word, text and Markdown files. Each time it starts it checks your folders again;
+            files that haven't changed aren't re-read. Images wait for OCR (Milestone 9).
           </p>
         </>
       )}
