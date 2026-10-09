@@ -122,8 +122,9 @@ The OCR models are bundled into the installer, so an installed Recall needs
 no downloads. Tested so far: the Linux `.deb` (18 MB) installed and run from
 a fresh profile **with no network access at all** — adding a folder,
 indexing, OCR, search and evidence all worked, and tracing the app process
-showed no connection attempts. The Windows and macOS installers have not
-been tested yet.
+showed no connection attempts. The Windows installer built by GitHub
+Actions has been installed and tested on Windows (adding a folder, indexing,
+search and evidence). The macOS installer has not been tested yet.
 
 Frontend-only work, without Rust: `npm run dev:mock` and open
 <http://localhost:1420>.
