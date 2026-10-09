@@ -153,5 +153,5 @@ notify.
 
 ## Licence
 
-Recall's licence has not been chosen yet. Third-party components keep their
-own licences (see [docs/MODELS.md](docs/MODELS.md) for the models).
+Recall is released under the [MIT License](LICENSE). Third-party components
+keep their own licences (see [docs/MODELS.md](docs/MODELS.md) for the models).

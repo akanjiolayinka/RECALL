@@ -3,6 +3,7 @@ name = "recall"
 version = "0.1.0"
 description = "Recall: your private AI memory. Everything searchable. Nothing uploaded."
 authors = ["Recall contributors"]
+license = "MIT"
 edition = "2021"
 # Oldest Rust version known to build Recall (uses Option::is_none_or).
 rust-version = "1.82"
