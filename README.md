@@ -141,6 +141,13 @@ Tauri 2 · Rust · React 19 · TypeScript · Vite · Tailwind CSS · shadcn/ui �
 TanStack Query · SQLite (rusqlite, FTS5) · ocrs/rten · pdf-extract ·
 notify.
 
+## Credits
+
+- **OCR:** [ocrs](https://github.com/robertknight/ocrs) by Robert Knight and
+  the Ocrs project contributors (MIT OR Apache-2.0). Its models are trained on
+  Google's [HierText](https://github.com/google-research-datasets/hiertext)
+  dataset (CC BY-SA 4.0). Recall uses the published models unmodified.
+
 ## Limitations
 
 - Meaning-based search is pending the embedding model (see above); until
