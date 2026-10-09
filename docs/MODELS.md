@@ -6,15 +6,16 @@ million parameters**, verified — not assumed.
 
 ## Current status
 
-| Purpose | Intended model | Status |
-| --- | --- | --- |
-| Embeddings (meaning-based search) | `BAAI/bge-small-en-v1.5` | **Not installed, not verified.** Code is ready to plug it in; see checkpoint below. |
-| OCR (text in images) | `ocrs` text-detection + text-recognition models | **Working, verified** (licence situation recorded below) |
-| Optional local LLM | e.g. `Qwen2.5-0.5B-Instruct` (to be verified) | Not started; optional |
+| Purpose | Model | Parameters | Status |
+| --- | --- | --- | --- |
+| Embeddings (meaning-based search) | `BAAI/bge-small-en-v1.5` | 33,212,160 | **Working, verified** |
+| OCR (text in images) | `ocrs` text-detection + text-recognition models | 3,047,032 | **Working, verified** (licence situation recorded below) |
+| Optional local LLM | e.g. `Qwen2.5-0.5B-Instruct` (to be verified) | — | Not started; optional |
 
-Until the embedding model is installed, Recall searches by **keywords and
-file names only** and says so on the Search page. Nothing in the app
-pretends to use AI that isn't there.
+If a model's files are missing, its feature reports itself unavailable with
+a reason and everything else keeps working (without the embedding model,
+Recall searches by keywords and file names only, and says so). Nothing in the
+app pretends to use AI that isn't there.
 
 Install the verified model files with `npm run download-models`
 (`scripts/download-models.mjs`, Node.js only). It checks every file's SHA-256
@@ -41,55 +42,56 @@ Rust (no native libraries to install or ship on Windows).
 Not supported yet: scanned PDFs (PDF pages would need rendering to images
 first) and word coordinates for highlighting inside images.
 
-## Embeddings: what is built
+## Embeddings: BAAI/bge-small-en-v1.5
 
-- `src-tauri/src/embeddings/mod.rs` — the `Embedder` trait every model
-  implements (`embed_passages`, `embed_query`, `model_id`, `dimensions`), and
-  `load()`, which currently reports the model as unavailable.
-- `src-tauri/src/indexing/embed.rs` — embeds passages in batches during
+Verified on GitHub Actions runners, which can reach Hugging Face (the
+development environment can't). Every number below comes from the CI log of
+the `checks` job in `.github/workflows/build.yml`, which repeats these checks
+on every push.
+
+| | |
+| --- | --- |
+| Source | https://huggingface.co/BAAI/bge-small-en-v1.5, revision `5c38ec7c405ec4b44b94cc5a9bb96e735b38267a` (pinned in `scripts/download-models.mjs`) |
+| Files | `onnx/model.onnx` (133,093,490 bytes, ONNX opset 11, published by BAAI in the model repository), `tokenizer.json` (711,396 bytes) |
+| SHA-256 | model.onnx `828e1496d7fabb79cfa4dcd84fa38625c0d3d21da474a00f08db0f559940cf35`<br>tokenizer.json `d241a60d5e8f04cc1b2b3e9ef7a4921b27bf526d9f6050ab90f9267a1f9e5c66` |
+| Parameters | **33,212,160**, summing every weight tensor (initializer) in `model.onnx` with the `onnx` Python package. The rten runtime reports 33,213,055 (it also counts small constant tensors in the graph). Either way far below 500 million. |
+| Architecture | BERT (`config.json`): 12 layers, hidden size 384, 12 attention heads, vocabulary 30,522, max 512 tokens |
+| Licence | **MIT**, as declared in the model card metadata (`license: mit`) of the official repository |
+| Runtime | `rten` 0.26 (the same pure-Rust runtime as OCR) and `rten-text` 0.26 for WordPiece tokenization from `tokenizer.json`; both MIT OR Apache-2.0. Pure Rust, no network code. |
+| How it's used | `src-tauri/src/embeddings/bge.rs`: the `[CLS]` token's output vector, L2-normalised, as the model card describes; the exact agreement with the official implementation (next row) confirms it. Queries get the model card's instruction prefix "Represent this sentence for searching relevant passages: "; passages don't. Inputs longer than 512 tokens are cut off (Recall's passages are ~1,000 characters, well under that). |
+| Correctness | Vectors match the official implementation (sentence-transformers, same revision) with cosine agreement **1.000000** on all 5 test texts (`matches_the_reference_implementation`; reference vectors from `scripts/bge_reference.py`). |
+| Search quality | On `test-data/`, searches sharing no words with the right file find it first: "what is the price of the allotment" → garden proposal, "when do I get my money back after leaving the apartment" → tenancy agreement and moving-out checklist, "promotion expenses" → marketing plan, "groceries to buy" → shopping list, "headset purchase" → headphones receipt (via OCR). Unrelated queries ("quantum physics lecture", "recipe for chocolate cake") find nothing. Test: `real_model_finds_test_files_by_meaning`. |
+| Threshold | `MIN_SIMILARITY` = 0.55, from the same test: the right file scored 0.57–0.77, other files 0.41–0.55, unrelated queries at most 0.46. Tested on a small synthetic set only; it may need tuning on real libraries. |
+| Speed | ~60 ms per text on a GitHub Actions runner; `test-data/` (13 passages, including reading the files and OCR) indexed in 2.9 s |
+| Shipping | Downloaded and checksum-verified by `npm run download-models`, bundled into installers as resources (`tauri.conf.json`), so an installed Recall needs no download |
+
+### How the rest of Recall uses it
+
+- `src-tauri/src/embeddings/mod.rs`: the `Embedder` trait every model
+  implements, and `load()`, which finds the model files.
+- `src-tauri/src/indexing/embed.rs`: embeds passages in batches during
   indexing; re-embeds automatically if `model_id` changes.
-- `src-tauri/src/database/embeddings.rs` — stores vectors (little-endian
-  `f32`) tagged with the model id; nearest-neighbour lookup (measured: ~56 ms
-  over 50,000 × 384-dim vectors, release build).
-- `src-tauri/src/search/` — hybrid ranking: 65% meaning, 25% keywords, 10%
+- `src-tauri/src/database/embeddings.rs`: stores vectors (little-endian
+  `f32`) tagged with the model id, plus a nearest-neighbour lookup (measured:
+  ~56 ms over 50,000 × 384-dim vectors, release build).
+- `src-tauri/src/search/`: hybrid ranking, 65% meaning, 25% keywords and 10%
   file name/title; without a model, 50% keywords and 50% file name/title.
-- Tests use a **fake, test-only** embedder (`embeddings/fake.rs`, compiled
-  only under `cfg(test)`) and a hand-made "housing" embedder in
-  `search/mod.rs`. They test the plumbing only, **not** search quality.
+- Unit tests use a **fake, test-only** embedder (`embeddings/fake.rs`,
+  compiled only under `cfg(test)`) to test the plumbing; search quality is
+  tested with the real model (above).
 
-Runtime chosen (not yet exercised with the real model): `candle` 0.11
-(pure-Rust inference, MIT/Apache-2.0) with `tokenizers` 0.22. Note:
-candle-core 0.11 requires `tokenizers` with the `onig` feature, which
-compiles a small C regex library (Oniguruma); this needs the MSVC C/C++ build
-tools on Windows, which Tauri already requires.
+### Re-running the checks locally
 
-## Checkpoint: Milestone 7 (blocked on network access to huggingface.co)
+```bash
+npm run download-models
+pip install sentence-transformers
+python scripts/bge_reference.py 5c38ec7c405ec4b44b94cc5a9bb96e735b38267a models/bge-small-en-v1.5/reference.json
+cd src-tauri && cargo test -- --ignored --nocapture
+```
 
-Do these in order once `huggingface.co` is reachable. Do not tick a box
-without evidence.
+### Changing the embedding model
 
-- [ ] Download the official files from https://huggingface.co/BAAI/bge-small-en-v1.5
-      at a pinned commit: `config.json`, `tokenizer.json`, `model.safetensors`.
-      Record the commit hash and each file's SHA-256 here.
-- [ ] Verify the parameter count by summing tensor sizes in
-      `model.safetensors` (expected around 33 million; must be ≤ 500 million).
-      Record the exact number here.
-- [ ] Verify the licence from the official repository (model card / LICENSE)
-      and record it here.
-- [ ] Implement `BgeEmbedder` (candle `BertModel`, CLS pooling, L2
-      normalisation, query instruction prefix as documented on the model card)
-      and return it from `embeddings::load()`.
-- [ ] Check output against a reference: compare vectors for a few sentences
-      with the official `sentence-transformers` implementation (cosine ≥ 0.99).
-- [ ] Test real semantic similarity on `test-data/`: e.g. "apartment notes"
-      should find the tenancy agreement and moving-out checklist; unrelated
-      queries should not.
-- [ ] Calibrate `search::semantic::MIN_SIMILARITY` (currently a placeholder,
-      0.5) and re-check the hybrid weights and result labels.
-- [ ] Write `npm run download-models` (Node, no Python needed): downloads the
-      pinned files into `models/`, verifies SHA-256, explains errors.
-- [ ] Decide how models ship in the installer (Tauri bundle resources vs.
-      first-run download) and test offline.
-
-Re-test after the checkpoint: Phase 8 (meaning search) and Phase 9 (hybrid
-ranking) in the real app.
+Implement `Embedder` for it, return it from `embeddings::load()`, give it a
+new `model_id` (stored vectors are then re-made automatically), record its
+verification here the same way, and re-calibrate `MIN_SIMILARITY` with
+`real_model_finds_test_files_by_meaning`.

@@ -24,7 +24,7 @@ computer. This page explains how the pieces fit together.
 ┌──────────▼──────────┐ ┌─────────▼────────────┐
 │ DATABASE            │ │ LOCAL AI             │
 │ database/  SQLite,  │ │ ocr/  (ocrs)         │
-│ FTS5, vectors       │ │ embeddings/ (pending)│
+│ FTS5, vectors       │ │ embeddings/ (BGE)    │
 └─────────────────────┘ └──────────────────────┘
 ```
 
@@ -137,7 +137,7 @@ generates or paraphrases text it shows as evidence.
 | Feature | Status | Where |
 | --- | --- | --- |
 | OCR (text in images) | Working: `ocrs` 0.13, ~3M parameters, pure Rust | `src-tauri/src/ocr/` |
-| Embeddings (meaning search) | Interface, storage, search and ranking built and unit-tested; **model not installed yet** | `src-tauri/src/embeddings/` |
+| Embeddings (meaning search) | Working: BAAI/bge-small-en-v1.5, 33M parameters, on the same `rten` runtime | `src-tauri/src/embeddings/` |
 | Local LLM ("Ask Recall") | Not started (optional) | — |
 
 Model files live in `models/` (downloaded and checksum-verified by

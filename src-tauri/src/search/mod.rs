@@ -411,8 +411,8 @@ mod tests {
 
     /// Calibration and end-to-end check with the real model on test-data/:
     /// searches that share no words with the right file must still find it.
-    /// Prints every file's best similarity, which is how MIN_SIMILARITY was
-    /// chosen. Run with `cargo test --release -- --ignored --nocapture`.
+    /// Unrelated queries must find nothing. Prints every file's best
+    /// similarity, which is how MIN_SIMILARITY was chosen. Run with `cargo test --release -- --ignored --nocapture`.
     #[test]
     #[ignore = "needs the BGE model files"]
     fn real_model_finds_test_files_by_meaning() {
@@ -510,6 +510,8 @@ mod tests {
                         "{query:?}: top result {top:?}, expected {expected:?}"
                     ));
                 }
+            } else if !results.is_empty() {
+                failures.push(format!("{query:?}: unrelated query matched {results:?}"));
             }
         }
         assert!(failures.is_empty(), "{failures:#?}");
