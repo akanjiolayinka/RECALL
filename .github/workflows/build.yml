@@ -76,6 +76,7 @@ jobs:
           print("files:", [s["rfilename"] for s in info["siblings"]])
           PY
           rev=$(python3 -c 'import json; print(json.load(open("hf-model.json"))["sha"])')
+          echo "BGE_REVISION=$rev" >> "$GITHUB_ENV"
           dir=models/bge-small-en-v1.5
           mkdir -p "$dir"
           for f in onnx/model.onnx tokenizer.json config.json; do
@@ -85,7 +86,12 @@ jobs:
           sha256sum "$dir"/*
           cat "$dir/config.json"
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
       - name: Count the embedding model's parameters (onnx package)
+        continue-on-error: true
         run: |
           pip install --quiet onnx
           python3 - <<'PY'
@@ -97,6 +103,15 @@ jobs:
           params = sum(math.prod(t.dims) for t in model.graph.initializer)
           print("parameters (initializers):", params)
           PY
+
+      # The official implementation's vectors, for the Rust test that checks
+      # Recall's own inference code gives the same results.
+      - name: Reference vectors (sentence-transformers)
+        continue-on-error: true
+        run: |
+          pip install --quiet torch --index-url https://download.pytorch.org/whl/cpu
+          pip install --quiet sentence-transformers
+          python scripts/bge_reference.py "$BGE_REVISION" models/bge-small-en-v1.5/reference.json
 
       # The tests that need real model files: OCR on the sample receipt,
       # BGE's parameter count and similarity checks, and meaning-based search
