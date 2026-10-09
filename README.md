@@ -81,6 +81,20 @@ All models must have at most 500 million parameters and run locally.
 Sources, checksums, licences and what is still to verify are in
 [docs/MODELS.md](docs/MODELS.md).
 
+## Download a test build (Windows)
+
+Every push to GitHub builds a Windows installer automatically
+([`.github/workflows/build.yml`](.github/workflows/build.yml)):
+
+1. On GitHub, open the repository's **Actions** tab and click the latest
+   **Build** run with a green tick.
+2. Under **Artifacts**, download **Recall-Windows-installer** (a zip).
+3. Unzip it and run `Recall_…_x64-setup.exe`.
+
+The installers are not code-signed, so Windows SmartScreen may warn about an
+unknown publisher; choose **More info → Run anyway**. Artifacts are kept for
+14 days.
+
 ## Get started (development)
 
 You need [Node.js](https://nodejs.org/) 20+, [Rust](https://rustup.rs/)

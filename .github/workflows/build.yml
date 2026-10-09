@@ -1,0 +1,98 @@
+# Runs on every push: checks that everything passes, and builds the Windows
+# installer. The installer appears under the run's "Artifacts" on GitHub.
+name: Build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+# A newer push to the same branch cancels the older, unfinished run.
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Tests and privacy audit
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install Tauri's Linux system libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - run: npm ci
+      - name: Frontend tests
+        run: npm test
+      - name: Frontend type-check and build
+        run: npm run build
+
+      - name: Rust formatting
+        run: cargo fmt --check
+        working-directory: src-tauri
+      - name: Rust lints
+        run: cargo clippy --all-targets -- -D warnings
+        working-directory: src-tauri
+      - name: Rust tests
+        run: cargo test
+        working-directory: src-tauri
+
+      - name: Privacy audit
+        run: npm run audit:privacy
+
+      # Information only: can this runner reach Hugging Face, where the
+      # embedding model (BAAI/bge-small-en-v1.5) is published? See docs/MODELS.md.
+      - name: Check access to Hugging Face (informational)
+        continue-on-error: true
+        run: |
+          curl -sSfL -o /dev/null -w "huggingface.co reachable: HTTP %{http_code}\n" \
+            https://huggingface.co/BAAI/bge-small-en-v1.5/resolve/main/config.json
+
+  windows-installer:
+    name: Windows installer
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - run: npm ci
+
+      # Downloads and checksum-verifies the OCR models (bundled into the
+      # installer), then runs `tauri build`.
+      - name: Build the installer
+        run: npm run build:app
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Recall-Windows-installer
+          path: |
+            src-tauri/target/release/bundle/nsis/*.exe
+            src-tauri/target/release/bundle/msi/*.msi
+          if-no-files-found: error
+          retention-days: 14
