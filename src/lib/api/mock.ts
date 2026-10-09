@@ -102,8 +102,10 @@ async function simulateScan(location: Location) {
         error: null,
       })),
     );
-  locations = locations.map((l) => (l.id === location.id ? { ...l, fileCount: total } : l));
   const readable = folder.files.filter(([, kind]) => kind !== "image").length;
+  locations = locations.map((l) =>
+    l.id === location.id ? { ...l, fileCount: total, readCount: readable, failedCount: 0 } : l,
+  );
   setScan({ ...base, state: "reading", filesFound: total, filesProcessed: total, filesToRead: readable });
   await delay(400);
   setScan({
@@ -138,6 +140,8 @@ export const mockApi: RecallApi = {
       name: folder.path.split("/").pop()!,
       path: folder.path,
       fileCount: 0,
+      readCount: 0,
+      failedCount: 0,
       scan: null,
     };
     locations = [...locations, location];

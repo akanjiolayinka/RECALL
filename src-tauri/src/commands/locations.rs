@@ -2,6 +2,7 @@ use serde::Serialize;
 use tauri::State;
 use tauri_plugin_dialog::DialogExt;
 
+use crate::database::files::LocationCounts;
 use crate::database::{self, Database};
 use crate::error::{parse_id, ApiError};
 use crate::files::now_millis;
@@ -18,17 +19,23 @@ pub struct LocationDto {
     pub path: String,
     /// Files from this folder currently in the index.
     pub file_count: usize,
+    /// Of those, files whose contents were read.
+    pub read_count: usize,
+    /// Of those, files that couldn't be read.
+    pub failed_count: usize,
     /// Latest scan progress since Recall started, or `None` if not scanned yet.
     pub scan: Option<ScanStatus>,
 }
 
 impl LocationDto {
-    fn new(location: &Location, file_count: usize, scans: &ScanStore) -> Self {
+    fn new(location: &Location, counts: LocationCounts, scans: &ScanStore) -> Self {
         Self {
             id: location.id.to_string(),
             name: location.display_name(),
             path: location.path.to_string_lossy().into_owned(),
-            file_count,
+            file_count: counts.files,
+            read_count: counts.read,
+            failed_count: counts.failed,
             scan: scans.status(location.id),
         }
     }
@@ -128,11 +135,11 @@ pub async fn add_location(
     start_scan(&app, location.id, location.path.clone());
 
     Ok(Some(AddLocationResponse {
-        location: LocationDto::new(&location, 0, &scans),
+        location: LocationDto::new(&location, LocationCounts::default(), &scans),
         replaced: plan
             .replaced
             .iter()
-            .map(|l| LocationDto::new(l, 0, &scans))
+            .map(|l| LocationDto::new(l, LocationCounts::default(), &scans))
             .collect(),
     }))
 }
@@ -146,7 +153,7 @@ pub fn list_locations(
     let counts = database::files::count_by_location(&conn)?;
     Ok(database::locations::list(&conn)?
         .iter()
-        .map(|l| LocationDto::new(l, counts.get(&l.id).copied().unwrap_or(0), &scans))
+        .map(|l| LocationDto::new(l, counts.get(&l.id).copied().unwrap_or_default(), &scans))
         .collect())
 }
 

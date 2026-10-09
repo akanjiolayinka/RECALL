@@ -27,7 +27,7 @@ export function LocationList({ locations, onRemove, onRescan, removingId }: Loca
                 {location.path}
               </p>
             </div>
-            <ScanProgress scan={location.scan} fileCount={location.fileCount} className="max-w-sm" />
+            <ScanProgress scan={location.scan} counts={location} className="max-w-sm" />
           </div>
           <div className="flex shrink-0 gap-1">
             <Button
