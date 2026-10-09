@@ -189,6 +189,39 @@ mod tests {
         assert!((similarity(&again[0], &passages[2]) - 1.0).abs() < 1e-5);
     }
 
+    /// Compares with vectors from the official implementation, written by
+    /// `scripts/bge_reference.py` to `<models>/bge-small-en-v1.5/reference.json`.
+    #[test]
+    #[ignore = "needs the BGE model files and reference vectors"]
+    fn matches_the_reference_implementation() {
+        #[derive(serde::Deserialize)]
+        struct Reference {
+            text: String,
+            query: bool,
+            vector: Vec<f32>,
+        }
+        let path = crate::test_support::real_models_dir()
+            .join(MODEL_SUBDIR)
+            .join("reference.json");
+        let json = std::fs::read_to_string(&path)
+            .unwrap_or_else(|_| panic!("run scripts/bge_reference.py to create {path:?}"));
+        let references: Vec<Reference> = serde_json::from_str(&json).unwrap();
+        let model = load_real_model();
+        for reference in &references {
+            let vector = if reference.query {
+                model.embed_query(&reference.text).unwrap()
+            } else {
+                model.embed_passages(&[&reference.text]).unwrap().remove(0)
+            };
+            let agreement = similarity(&vector, &reference.vector);
+            println!(
+                "{agreement:.6} agreement with the reference for {:?}",
+                reference.text
+            );
+            assert!(agreement >= 0.99, "{agreement} for {:?}", reference.text);
+        }
+    }
+
     #[test]
     #[ignore = "needs the BGE model files"]
     fn empty_and_very_long_texts_still_embed() {
