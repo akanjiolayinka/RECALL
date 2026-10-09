@@ -42,6 +42,9 @@ jobs:
         run: npm test
       - name: Frontend type-check and build
         run: npm run build
+      # Tauri's build script checks that bundled resources exist.
+      - name: Download the OCR models (checksums verified)
+        run: npm run download-models
 
       - name: Rust formatting
         run: cargo fmt --check
