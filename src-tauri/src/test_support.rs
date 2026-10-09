@@ -1,6 +1,6 @@
 //! Helpers shared by unit tests: build a small in-memory library.
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use rusqlite::Connection;
 
@@ -10,6 +10,14 @@ use crate::database::locations;
 use crate::extract::{Extracted, Page};
 use crate::files::FileKind;
 use crate::indexing::chunk::chunk_pages;
+
+/// Where tests that need real model files find them:
+/// `RECALL_MODELS_DIR`, or `models/` at the repository root.
+pub fn real_models_dir() -> PathBuf {
+    std::env::var_os("RECALL_MODELS_DIR")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../models"))
+}
 
 pub fn add_location(conn: &Connection) -> i64 {
     let count: i64 = conn

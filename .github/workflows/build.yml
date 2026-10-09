@@ -59,13 +59,53 @@ jobs:
       - name: Privacy audit
         run: npm run audit:privacy
 
-      # Information only: can this runner reach Hugging Face, where the
-      # embedding model (BAAI/bge-small-en-v1.5) is published? See docs/MODELS.md.
-      - name: Check access to Hugging Face (informational)
-        continue-on-error: true
+      # The embedding model is published on Hugging Face, which the
+      # development environment can't reach but GitHub's runners can. Until its
+      # checksums are pinned in scripts/download-models.mjs, this fetches the
+      # current revision and prints what docs/MODELS.md must record.
+      - name: Fetch the embedding model (BAAI/bge-small-en-v1.5)
         run: |
-          curl -sSfL -o /dev/null -w "huggingface.co reachable: HTTP %{http_code}\n" \
-            https://huggingface.co/BAAI/bge-small-en-v1.5/resolve/main/config.json
+          set -euo pipefail
+          repo=BAAI/bge-small-en-v1.5
+          curl -sSfL "https://huggingface.co/api/models/$repo" -o hf-model.json
+          python3 - <<'PY'
+          import json
+          info = json.load(open("hf-model.json"))
+          print("revision:", info["sha"])
+          print("licence (model card):", info.get("cardData", {}).get("license"))
+          print("files:", [s["rfilename"] for s in info["siblings"]])
+          PY
+          rev=$(python3 -c 'import json; print(json.load(open("hf-model.json"))["sha"])')
+          dir=models/bge-small-en-v1.5
+          mkdir -p "$dir"
+          for f in onnx/model.onnx tokenizer.json config.json; do
+            curl -sSfL "https://huggingface.co/$repo/resolve/$rev/$f" -o "$dir/$(basename "$f")"
+          done
+          ls -l "$dir"
+          sha256sum "$dir"/*
+          cat "$dir/config.json"
+
+      - name: Count the embedding model's parameters (onnx package)
+        run: |
+          pip install --quiet onnx
+          python3 - <<'PY'
+          import math, onnx
+          model = onnx.load("models/bge-small-en-v1.5/model.onnx")
+          print("opset:", [(o.domain, o.version) for o in model.opset_import])
+          print("inputs:", [i.name for i in model.graph.input])
+          print("outputs:", [o.name for o in model.graph.output])
+          params = sum(math.prod(t.dims) for t in model.graph.initializer)
+          print("parameters (initializers):", params)
+          PY
+
+      # The tests that need real model files: OCR on the sample receipt,
+      # BGE's parameter count and similarity checks, and meaning-based search
+      # over test-data/.
+      - name: Real-model tests
+        run: cargo test -- --ignored --nocapture
+        working-directory: src-tauri
+        env:
+          RECALL_MODELS_DIR: ${{ github.workspace }}/models
 
   windows-installer:
     name: Windows installer

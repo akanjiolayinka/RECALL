@@ -4,16 +4,16 @@
 //! trait, so the model can be plugged in or replaced without touching
 //! indexing or search.
 //!
-//! STATUS: no real model is wired in yet. The intended model is
-//! BAAI/bge-small-en-v1.5 (see docs/MODELS.md for the open verification
-//! checklist). Until it is, `load()` reports the model as unavailable and
-//! Recall runs keyword + file-name search only. A fake embedder exists for
-//! unit tests only (`fake.rs`, compiled under `cfg(test)`); it is never part
-//! of the app.
+//! The model is BAAI/bge-small-en-v1.5 (`bge.rs`, docs/MODELS.md). When its
+//! files aren't installed, `load()` says so and Recall runs keyword +
+//! file-name search only. A fake embedder exists for unit tests only
+//! (`fake.rs`, compiled under `cfg(test)`); it is never part of the app.
 
+pub mod bge;
 #[cfg(test)]
 pub mod fake;
 
+use std::path::PathBuf;
 use std::sync::Arc;
 
 use thiserror::Error;
@@ -47,18 +47,35 @@ pub struct EmbeddingModel {
     pub unavailable_reason: Option<String>,
 }
 
-/// Load the local embedding model.
-///
-/// TODO(Milestone 7 checkpoint): load BAAI/bge-small-en-v1.5 here once its
-/// files have been downloaded and verified (docs/MODELS.md). Until then
-/// semantic search is honestly reported as unavailable.
-pub fn load() -> EmbeddingModel {
-    EmbeddingModel {
+/// Load the embedding model from the first folder that has its files.
+pub fn load(model_dirs: &[PathBuf]) -> EmbeddingModel {
+    let unavailable = |reason: &str| EmbeddingModel {
         embedder: None,
-        unavailable_reason: Some(
-            "Meaning-based search isn't available yet: the local AI model hasn't been installed. Recall is searching by keywords and file names."
-                .into(),
-        ),
+        unavailable_reason: Some(reason.into()),
+    };
+    let Some(dir) = model_dirs
+        .iter()
+        .map(|dir| dir.join(bge::MODEL_SUBDIR))
+        .find(|dir| dir.join("model.onnx").is_file() && dir.join("tokenizer.json").is_file())
+    else {
+        return unavailable(
+            "Meaning-based search isn't available: the AI model files aren't installed. Run `npm run download-models`. Recall is searching by keywords and file names.",
+        );
+    };
+    match bge::BgeSmall::load(&dir) {
+        Ok(model) => EmbeddingModel {
+            embedder: Some(Arc::new(model)),
+            unavailable_reason: None,
+        },
+        Err(err) => {
+            eprintln!(
+                "recall: could not load the embedding model from {}: {err}",
+                dir.display()
+            );
+            unavailable(
+                "Recall couldn't load its meaning-search model files. Run `npm run download-models` again to replace them.",
+            )
+        }
     }
 }
 
@@ -68,13 +85,6 @@ pub fn similarity(a: &[f32], b: &[f32]) -> f32 {
 }
 
 /// Scale a vector to length 1. Leaves an all-zero vector unchanged.
-#[cfg_attr(
-    not(test),
-    expect(
-        dead_code,
-        reason = "for the BGE embedder (Milestone 7 checkpoint); used by tests today"
-    )
-)]
 pub fn normalize(vector: &mut [f32]) {
     let length = vector.iter().map(|x| x * x).sum::<f32>().sqrt();
     if length > 0.0 {
@@ -116,9 +126,12 @@ mod tests {
     }
 
     #[test]
-    fn no_model_is_loaded_until_bge_is_verified() {
-        let model = load();
+    fn reports_missing_model_files_plainly() {
+        let model = load(&[PathBuf::from("/nonexistent")]);
         assert!(model.embedder.is_none());
-        assert!(model.unavailable_reason.is_some());
+        assert!(model
+            .unavailable_reason
+            .unwrap()
+            .contains("npm run download-models"));
     }
 }

@@ -408,4 +408,110 @@ mod tests {
         assert!(short.chars().count() <= SEMANTIC_SNIPPET_CHARS + 1);
         assert_eq!(shorten("  a \n b  "), "a b");
     }
+
+    /// Calibration and end-to-end check with the real model on test-data/:
+    /// searches that share no words with the right file must still find it.
+    /// Prints every file's best similarity, which is how MIN_SIMILARITY was
+    /// chosen. Run with `cargo test --release -- --ignored --nocapture`.
+    #[test]
+    #[ignore = "needs the BGE model files"]
+    fn real_model_finds_test_files_by_meaning() {
+        use crate::database::locations;
+        use crate::embeddings::bge::{BgeSmall, MODEL_SUBDIR};
+        use crate::indexing::pipeline::{index_location, Models};
+        use crate::ocr::Ocr;
+        use crate::test_support::real_models_dir;
+
+        let models = real_models_dir();
+        let model = BgeSmall::load(&models.join(MODEL_SUBDIR)).expect("BGE model files installed");
+        let ocr = Ocr::load(&models.join("ocrs")).ok();
+        let mut conn = test_connection();
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../test-data");
+        let location = locations::insert(&conn, &root, 0).unwrap().id;
+        let started = std::time::Instant::now();
+        let status = index_location(
+            &mut conn,
+            location,
+            &root,
+            Models {
+                ocr: ocr.as_ref(),
+                embedder: Some(&model),
+            },
+            &AtomicBool::new(false),
+            |_, _| {},
+        )
+        .unwrap();
+        println!(
+            "indexed test-data: {} passages embedded in {:?}",
+            status.passages_embedded,
+            started.elapsed()
+        );
+
+        let name = |path: &Path| path.file_name().unwrap().to_string_lossy().into_owned();
+        // (query, acceptable top results). None of these queries shares a
+        // searchable word with its expected file.
+        let mut cases = vec![
+            (
+                "what is the price of the allotment",
+                vec!["Project Proposal"],
+            ),
+            (
+                "when do I get my money back after leaving the apartment",
+                vec!["Tenancy Agreement", "Moving out checklist"],
+            ),
+            ("promotion expenses", vec!["Q3 Marketing Plan"]),
+            ("groceries to buy", vec!["Shopping list"]),
+        ];
+        if ocr.is_some() {
+            cases.push(("headset purchase", vec!["Headphones receipt"]));
+        }
+        let unrelated = ["quantum physics lecture", "recipe for chocolate cake"];
+
+        let mut failures = Vec::new();
+        for query in cases.iter().map(|c| c.0).chain(unrelated) {
+            let vector = model.embed_query(query).unwrap();
+            let mut best: Vec<(String, f32)> = Vec::new();
+            for (chunk_id, sim) in
+                crate::database::embeddings::nearest(&conn, model.model_id(), &vector, 1000)
+                    .unwrap()
+            {
+                let path: String = conn
+                    .query_row(
+                        "SELECT files.path FROM chunks
+                         JOIN documents ON documents.id = chunks.document_id
+                         JOIN files ON files.id = documents.file_id
+                         WHERE chunks.id = ?1",
+                        [chunk_id],
+                        |row| row.get(0),
+                    )
+                    .unwrap();
+                let file = name(Path::new(&path));
+                if !best.iter().any(|(f, _)| *f == file) {
+                    best.push((file, sim));
+                }
+            }
+            println!("\n{query:?}");
+            for (file, sim) in &best {
+                println!("  {sim:.3}  {file}");
+            }
+            let results = search(&conn, Some(&model), query, 3).unwrap();
+            for r in &results {
+                println!(
+                    "  -> {:.3} {} {:?}",
+                    r.relevance,
+                    name(&r.path),
+                    r.match_reasons
+                );
+            }
+            if let Some((_, expected)) = cases.iter().find(|c| c.0 == query) {
+                let top = results.first().map(|r| name(&r.path)).unwrap_or_default();
+                if !expected.iter().any(|e| top.starts_with(e)) {
+                    failures.push(format!(
+                        "{query:?}: top result {top:?}, expected {expected:?}"
+                    ));
+                }
+            }
+        }
+        assert!(failures.is_empty(), "{failures:#?}");
+    }
 }
