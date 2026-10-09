@@ -138,12 +138,35 @@ pub fn delete(conn: &Connection, id: i64) -> rusqlite::Result<()> {
     Ok(())
 }
 
-/// Number of files stored for each location.
-pub fn count_by_location(conn: &Connection) -> rusqlite::Result<HashMap<i64, usize>> {
-    let mut stmt = conn.prepare("SELECT location_id, COUNT(*) FROM files GROUP BY location_id")?;
+/// How many of a location's files are in the index, and in what state.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct LocationCounts {
+    pub files: usize,
+    /// Files whose contents were read.
+    pub read: usize,
+    /// Files that couldn't be read.
+    pub failed: usize,
+}
+
+/// File counts for each location.
+pub fn count_by_location(conn: &Connection) -> rusqlite::Result<HashMap<i64, LocationCounts>> {
+    let mut stmt = conn.prepare(
+        "SELECT location_id, COUNT(*),
+                SUM(status = 'indexed'), SUM(status = 'error')
+         FROM files GROUP BY location_id",
+    )?;
     let rows = stmt.query_map([], |row| {
-        let count: i64 = row.get(1)?;
-        Ok((row.get(0)?, usize::try_from(count).unwrap_or(0)))
+        let count = |i| -> rusqlite::Result<usize> {
+            Ok(usize::try_from(row.get::<_, i64>(i)?).unwrap_or(0))
+        };
+        Ok((
+            row.get(0)?,
+            LocationCounts {
+                files: count(1)?,
+                read: count(2)?,
+                failed: count(3)?,
+            },
+        ))
     })?;
     rows.collect()
 }
@@ -407,13 +430,21 @@ mod tests {
         assert!(!notes.looks_unchanged(11, Some(300)));
         assert!(!notes.looks_unchanged(10, Some(301)));
 
+        let pending = |files| LocationCounts {
+            files,
+            read: 0,
+            failed: 0,
+        };
         assert_eq!(
             count_by_location(&conn).unwrap(),
-            HashMap::from([(a, 2), (b, 1)])
+            HashMap::from([(a, pending(2)), (b, pending(1))])
         );
         delete(&conn, notes.id).unwrap();
         locations::delete(&conn, b).unwrap();
-        assert_eq!(count_by_location(&conn).unwrap(), HashMap::from([(a, 1)]));
+        assert_eq!(
+            count_by_location(&conn).unwrap(),
+            HashMap::from([(a, pending(1))])
+        );
     }
 
     #[test]

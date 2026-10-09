@@ -32,11 +32,11 @@ function LocationProgress({ location }: { location: Location }) {
         </p>
       </div>
       {scan?.state === "failed" ? (
-        <ErrorMessage message={describeScan(scan)} />
+        <ErrorMessage message={describeScan(scan, location)} />
       ) : (
         <>
           <Progress value={percent} label={`Progress for ${location.name}`} />
-          <p className="text-sm">{describeScan(scan, location.fileCount)}</p>
+          <p className="text-sm">{describeScan(scan, location)}</p>
           {isScanning(scan) && scan?.currentFile && (
             <p className="truncate text-xs text-muted-foreground">Now: {scan.currentFile}</p>
           )}

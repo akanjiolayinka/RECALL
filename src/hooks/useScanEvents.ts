@@ -25,6 +25,8 @@ export function useScanEvents() {
         if (status.state === "done" || status.state === "failed") {
           void queryClient.invalidateQueries({ queryKey: FILES_KEY });
           void queryClient.invalidateQueries({ queryKey: ["document"] });
+          // Refresh per-folder totals (files read / couldn't be read).
+          void queryClient.invalidateQueries({ queryKey: LOCATIONS_KEY });
           // Files may have been added, changed or removed: old results are stale.
           void queryClient.invalidateQueries({ queryKey: ["search"] });
           void queryClient.invalidateQueries({ queryKey: ["evidence"] });

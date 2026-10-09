@@ -66,6 +66,10 @@ export interface Location {
   path: string;
   /** Files from this folder currently saved in the index. */
   fileCount: number;
+  /** Of those, files whose contents were read. */
+  readCount: number;
+  /** Of those, files that couldn't be read. */
+  failedCount: number;
   /** Latest scan progress since the app started, or null if not scanned yet. */
   scan: ScanStatus | null;
 }

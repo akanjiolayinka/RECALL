@@ -12,7 +12,8 @@
     "tauri": "tauri",
     "test": "vitest run",
     "download-models": "node scripts/download-models.mjs",
-    "audit:privacy": "node scripts/audit-privacy.mjs"
+    "audit:privacy": "node scripts/audit-privacy.mjs",
+    "build:app": "npm run download-models && tauri build"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.2.0",

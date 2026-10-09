@@ -61,5 +61,6 @@ pub fn run() {
             commands::search::get_evidence,
         ])
         .run(tauri::generate_context!())
+        // If Tauri itself can't start there is no window to report to.
         .expect("error while running tauri application");
 }

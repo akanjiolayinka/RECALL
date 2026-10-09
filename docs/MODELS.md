@@ -36,6 +36,7 @@ Rust (no native libraries to install or ship on Windows).
 | Training data | Google's HierText dataset (stated in ocrs-cli's source) |
 | Weights licence | **Not yet verified.** The ocrs project README on GitHub states it; it could not be read from the development environment. Expected to be CC BY-SA 4.0 (the HierText licence) — confirm before release. |
 | Tested | Reads `test-data/images/Headphones receipt.png` exactly (`cargo test --release -- --ignored`, with the models installed); ~0.35 s per image in a release build |
+| Shipping | Bundled into installers as resources (`tauri.conf.json`); tested in an installed Linux `.deb` with no network access |
 
 Not supported yet: scanned PDFs (PDF pages would need rendering to images
 first) and word coordinates for highlighting inside images.

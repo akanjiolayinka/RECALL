@@ -33,6 +33,12 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "resources": {
+      "../models/ocrs/text-detection.onnx": "models/ocrs/text-detection.onnx",
+      "../models/ocrs/text-recognition.onnx": "models/ocrs/text-recognition.onnx"
+    },
+    "shortDescription": "Your private AI memory. Everything searchable. Nothing uploaded.",
+    "category": "Productivity"
   }
 }

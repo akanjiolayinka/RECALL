@@ -4,128 +4,154 @@ This project was submitted to the ryze.ai hackathon by Olayinka Akanji.
 
 **Your private AI memory. Everything searchable. Nothing uploaded.**
 
-Recall is a local-first desktop app for searching the files on your computer by
-what you remember about them, not by filename. All AI runs on your device.
+Recall is a desktop app that lets you search the files on your computer the
+way you search your memory. Instead of remembering a file's name or folder,
+describe what you remember about it — *"the document about my project
+budget"*, *"my headphone receipt"* — and Recall finds it and shows you the
+exact passage that proves it.
 
-> **Status: early development.** You can choose folders, Recall reads the text
-> of PDF, Word, text and Markdown files, and search finds files by the words
-> in their text and their names. **The local AI model is not installed yet**,
-> so searching by *meaning* is not available — the code for it is built and
-> unit-tested, but has not been tested with the real model (see
-> [docs/MODELS.md](docs/MODELS.md)). Text in images is read with a small local
-> OCR model.
-> This README only describes what currently works; it will grow as features land.
+Everything happens on your computer: indexing, text recognition, search and
+the database. Recall contains no internet client and no cloud AI.
 
-## What works today
+> **Status.** The core product works: folders, indexing of documents and
+> images, keyword and file-name search, evidence, file watching and the
+> privacy dashboard. **Meaning-based search is not available yet**: its code
+> is built and unit-tested, but the embedding model (BAAI/bge-small-en-v1.5)
+> could not be downloaded and verified in the development environment yet.
+> See [What works](#what-works) and [docs/MODELS.md](docs/MODELS.md).
+
+## How it works
+
+1. **Add a folder** in *Library*. Recall finds the PDFs, Word documents,
+   text and Markdown files and images (PNG, JPG, WEBP) inside it.
+2. **Recall reads them locally**: text from documents (with page numbers for
+   PDFs), and text inside images with a small on-device OCR model. Text is
+   split into passages and stored in a local SQLite index.
+3. **Search** by what you remember. Recall matches the words of your search
+   against passages and file names, ranks files, and explains why each one
+   matched.
+4. **Check the source.** *Show source* displays the matching passage
+   highlighted inside its page. *The AI finds it. The source proves it.*
+5. **It stays up to date.** Recall watches your folders and re-indexes only
+   what changed.
+
+## What works
 
 | Feature | Status |
 | --- | --- |
-| Desktop app launches (Tauri + React) | Working |
-| Frontend talks to the Rust backend | Working |
-| Development mock mode for UI work | Working |
-| Choose folders in Library (system folder picker) | Working |
-| Find supported files (PDF, DOCX, TXT, MD, PNG, JPG, WEBP) with size, dates and a SHA-256 fingerprint | Working |
-| Remember folders and files between launches (local SQLite database) | Working |
-| Re-check folders at startup and on Rescan; unchanged files aren't re-read | Working |
-| Watch folders: new, changed and deleted files are picked up automatically | Working |
-| Read text from TXT, Markdown, PDF (with page numbers) and DOCX (with title/author); split into passages | Working |
-| View the text Recall extracted from a file | Working |
-| Clear messages for files that can't be read (damaged, password-protected, scanned PDFs, over 100 MB) | Working |
-| Browse and filter found files by name and type; live scan progress | Working |
-| Keyword search (SQLite FTS5): best passage per file, page number, highlighted snippet, why it matched | Working |
-| File-name and document-title matching (finds images by name) | Working |
-| Hybrid ranking of meaning, keyword and file-name matches | Working for keywords + names; meaning part unit-tested only |
-| Open a result in its default app | Working |
-| Evidence viewer: the matching passage highlighted within its page, with page number and path | Working |
-| Meaning-based search with BAAI/bge-small-en-v1.5 | **Pending**: model not yet downloaded or verified ([checkpoint](docs/MODELS.md)) |
-| Read text in images (PNG, JPG, WEBP) with local OCR (ocrs, ~3M parameters) | Working — run `npm run download-models` first |
-| OCR for scanned PDFs | Not implemented yet |
-| Privacy page: local AI status, index location and size, what is stored | Working |
-| Privacy audit (`npm run audit:privacy`): no network client, no cloud AI, locked-down app window | Passing |
+| Add/remove folders with the system folder picker | Working |
+| Find supported files: PDF, DOCX, TXT, MD, PNG, JPG/JPEG, WEBP | Working |
+| Read document text (PDF with page numbers, DOCX with title/author, UTF-8/UTF-16 text) | Working |
+| Read text in images with local OCR (ocrs, ~3 million parameters) | Working |
+| Keyword search (SQLite FTS5, English word stems) with highlighted snippets and page numbers | Working |
+| File-name and title matching (finds images by name) | Working |
+| Hybrid ranking with plain-language "why it matched" reasons | Working for keywords + file names |
+| Evidence viewer: the passage highlighted within its page; *Open original* | Working |
+| Incremental indexing: unchanged files are never re-read | Working |
+| File watching: new, changed and deleted files picked up automatically | Working |
+| Privacy dashboard with measured facts | Working |
+| Privacy audit (`npm run audit:privacy`) | Passing |
+| Works with no internet connection (installed app) | Tested on Linux |
+| **Meaning-based search** (local embeddings, BAAI/bge-small-en-v1.5) | **Pending** — model not yet verified ([checkpoint](docs/MODELS.md#checkpoint-milestone-7-blocked-on-network-access-to-huggingfaceco)) |
+| OCR for scanned PDFs (pages without a text layer) | Not supported yet |
+| Optional local LLM ("Ask Recall") | Not started (optional) |
 
-## Requirements
+## Privacy
 
-- [Node.js](https://nodejs.org/) 20 or newer (developed with 22)
-- [Rust](https://rustup.rs/) (stable)
-- Tauri's system prerequisites for your OS: <https://v2.tauri.app/start/prerequisites/>
+- **No network code.** The Windows, macOS and Linux builds contain no HTTP,
+  TLS or WebSocket client, and the app window is restricted by a Content
+  Security Policy to talking to Recall itself.
+- **No cloud AI.** OCR runs in-process on a local model file; so will
+  embeddings.
+- **Your files are only read**, never changed, moved, copied or uploaded.
+- **One local index**, `recall.db`, in your app-data folder
+  (`%APPDATA%\ai.recall.desktop\` on Windows). Delete it to reset Recall.
+- **Verified, not just promised:** `npm run audit:privacy` checks all of the
+  above and fails if it ever changes. The in-app *Privacy* page shows only
+  values measured from the running app.
 
-## Run it
+## AI models
+
+| Purpose | Model | Parameters | Status |
+| --- | --- | --- | --- |
+| Text in images (OCR) | ocrs `text-detection` + `text-recognition` | 620,538 + 2,426,494 (counted from the files) | In use |
+| Meaning-based search | BAAI/bge-small-en-v1.5 | to be counted (expected ~33M) | Pending verification |
+
+All models must have at most 500 million parameters and run locally.
+Sources, checksums, licences and what is still to verify are in
+[docs/MODELS.md](docs/MODELS.md).
+
+## Get started (development)
+
+You need [Node.js](https://nodejs.org/) 20+, [Rust](https://rustup.rs/)
+1.82+ and Tauri's prerequisites for your OS
+(<https://v2.tauri.app/start/prerequisites/>; on Windows: Microsoft C++
+Build Tools and WebView2).
 
 ```bash
 npm install
-npm run tauri dev
+npm run download-models   # OCR model files (~12 MB) into models/, checksums verified
+npm run tauri dev         # first build takes a few minutes
 ```
 
-The first run compiles the Rust backend and takes a few minutes.
+Then in the app: **Library → Add folder** and choose `test-data/` (synthetic
+sample files) or your own folder, and search from the **Search** page
+(**Ctrl+K** / **⌘K** from anywhere).
 
-### Install the local AI models
+Build an installer:
 
 ```bash
-npm run download-models
+npm run build:app         # downloads/verifies models, then `tauri build`
 ```
 
-Downloads the OCR model files (about 12 MB) into `models/` and verifies their
-checksums. See [docs/MODELS.md](docs/MODELS.md) for exactly what is downloaded.
+The OCR models are bundled into the installer, so an installed Recall needs
+no downloads. Tested so far: the Linux `.deb` (18 MB) installed and run from
+a fresh profile **with no network access at all** — adding a folder,
+indexing, OCR, search and evidence all worked, and tracing the app process
+showed no connection attempts. The Windows and macOS installers have not
+been tested yet.
 
-### Where Recall keeps its data
+Frontend-only work, without Rust: `npm run dev:mock` and open
+<http://localhost:1420>.
 
-Recall's index is a single SQLite file, `recall.db`, in the app data folder:
+## Tests and checks
 
-| OS | Location |
+```bash
+npm test                          # frontend unit tests
+npm run build                     # frontend type-check + build
+cd src-tauri && cargo test        # backend unit tests
+cargo clippy --all-targets        # zero warnings expected
+cd .. && npm run audit:privacy    # privacy audit
+```
+
+## Documentation
+
+| Document | For |
 | --- | --- |
-| Windows | `%APPDATA%\ai.recall.desktop\` |
-| macOS | `~/Library/Application Support/ai.recall.desktop/` |
-| Linux | `~/.local/share/ai.recall.desktop/` |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | How Recall works, in 10 minutes |
+| [docs/API.md](docs/API.md) | The frontend ↔ backend contract |
+| [docs/FRONTEND_QUICKSTART.md](docs/FRONTEND_QUICKSTART.md) | Working on the UI |
+| [docs/MODELS.md](docs/MODELS.md) | AI models, verification, checklist |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Setting up, conventions, pull requests |
+| [test-data/README.md](test-data/README.md) | The synthetic sample files |
 
-It contains file paths, sizes, dates and fingerprints — never copies of your
-files. Deleting it resets Recall; your own files are never modified.
+## Built with
 
-### Run the tests
+Tauri 2 · Rust · React 19 · TypeScript · Vite · Tailwind CSS · shadcn/ui ·
+TanStack Query · SQLite (rusqlite, FTS5) · ocrs/rten · pdf-extract ·
+notify.
 
-```bash
-npm test                 # frontend unit tests (Vitest)
-cd src-tauri && cargo test   # backend unit tests
-```
+## Limitations
 
-### UI-only mock mode (no Rust needed)
+- Meaning-based search is pending the embedding model (see above); until
+  then, search matches words and file names, not meaning.
+- Scanned PDFs (no text layer) are detected and reported, not OCR'd.
+- Keyword stemming is English-only; file-name matching is case-insensitive
+  for ASCII letters only.
+- Very large folders are fully re-walked on each change; only changed files
+  are re-read.
 
-```bash
-npm run dev:mock
-```
+## Licence
 
-Then open <http://localhost:1420> in a browser. An amber banner marks fake
-development data. Mock mode is never included in production builds.
-
-## Project layout
-
-```text
-src/                 React + TypeScript frontend
-  components/ui/     Reusable UI building blocks (shadcn/ui style)
-  components/layout/ App shell: sidebar, page header, placeholders
-  pages/             One file per screen
-  components/library/ Library screen pieces (folder list, file browser)
-  components/indexing/ Scan progress display
-  components/evidence/ Evidence viewer and extracted-text viewer
-  components/search/ Search result card
-  hooks/             React hooks that load data through the API client
-  lib/api/           The only place the frontend talks to the backend
-src-tauri/           Rust backend (Tauri)
-  src/commands/      Commands the frontend can call (thin adapters)
-  src/locations/     Rules for which folders can be added (unit-tested)
-  src/files/         Finding, describing, fingerprinting and filtering files (unit-tested)
-  src/indexing/pipeline.rs  The indexing pipeline: find, fingerprint, read, embed (unit-tested)
-  src/scanning.rs    Runs the pipeline in the background and reports progress to the UI
-  src/watching.rs    Watches library folders and rescans them when files change
-  src/database/      SQLite storage and numbered schema migrations (unit-tested)
-  src/extract/       Text extraction for TXT, MD, PDF, DOCX (unit-tested)
-  src/indexing/      Splitting text into passages, embedding, the pipeline (unit-tested)
-  src/search/        Keyword, meaning and file-name search; hybrid ranking (unit-tested)
-  src/embeddings/    The Embedder interface for local embedding models (model pending)
-  src/ocr/           Reading text in images with the local ocrs engine
-scripts/download-models.mjs  Downloads and verifies model files into models/
-scripts/audit-privacy.mjs    Privacy audit (network libraries, cloud AI, CSP)
-test-data/           Synthetic demo files (see test-data/README.md)
-docs/MODELS.md       AI models: status, verification checklist
-scripts/             Developer scripts (test data generator)
-  src/error.rs       The error format every command returns
-```
+Recall's licence has not been chosen yet. Third-party components keep their
+own licences (see [docs/MODELS.md](docs/MODELS.md) for the models).
