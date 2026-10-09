@@ -29,7 +29,9 @@ fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
 
     let locations = database::locations::list(&db.connect()?)?;
     app.manage(db);
-    app.manage(ocr::OcrModel::load(&models::candidate_dirs(app.handle())));
+    let model_dirs = models::candidate_dirs(app.handle());
+    app.manage(ocr::OcrModel::load(&model_dirs));
+    app.manage(embeddings::load(&model_dirs));
     let folders: Vec<_> = locations.iter().map(|l| l.path.clone()).collect();
     app.manage(watching::FolderWatcher::start(app.handle(), &folders));
     for location in locations {
@@ -44,7 +46,6 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .manage(ScanStore::default())
-        .manage(embeddings::load())
         .setup(setup)
         .invoke_handler(tauri::generate_handler![
             commands::app::get_app_info,

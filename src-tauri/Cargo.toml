@@ -38,6 +38,8 @@ ocrs = "0.13"
 rten = "0.26"
 image = { version = "0.25.6", default-features = false, features = ["png", "jpeg", "webp"] }
 notify = "8"
+rten-text = "0.26"
+rten-tensor = "0.26"
 
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
