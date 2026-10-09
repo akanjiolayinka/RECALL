@@ -18,12 +18,12 @@ const MODELS_DIR = join(ROOT, "models");
 
 /**
  * Models to install. Each file lists download addresses in order of
- * preference; the publisher's host has been seen returning "not found" from
- * one address while the other worked, so both are tried.
- *
- * The embedding model (BAAI/bge-small-en-v1.5) is not listed yet: it has not
- * been downloaded and verified. See the checkpoint in docs/MODELS.md.
+ * preference; the ocrs host has been seen returning "not found" from one
+ * address while the other worked, so both are tried.
  */
+const BGE_REVISION = "5c38ec7c405ec4b44b94cc5a9bb96e735b38267a"; // also in .github/workflows/build.yml
+const BGE_URL = `https://huggingface.co/BAAI/bge-small-en-v1.5/resolve/${BGE_REVISION}`;
+
 const MODELS = [
   {
     name: "ocrs OCR models (text in images)",
@@ -43,6 +43,21 @@ const MODELS = [
           "https://ocrs-models.s3-accelerate.amazonaws.com/text-recognition.onnx",
           "https://ocrs-models.s3.amazonaws.com/text-recognition.onnx",
         ],
+      },
+    ],
+  },
+  {
+    name: "BAAI/bge-small-en-v1.5 (meaning-based search)",
+    files: [
+      {
+        path: "bge-small-en-v1.5/model.onnx",
+        sha256: "828e1496d7fabb79cfa4dcd84fa38625c0d3d21da474a00f08db0f559940cf35",
+        urls: [`${BGE_URL}/onnx/model.onnx`],
+      },
+      {
+        path: "bge-small-en-v1.5/tokenizer.json",
+        sha256: "d241a60d5e8f04cc1b2b3e9ef7a4921b27bf526d9f6050ab90f9267a1f9e5c66",
+        urls: [`${BGE_URL}/tokenizer.json`],
       },
     ],
   },

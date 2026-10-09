@@ -13,12 +13,11 @@ exact passage that proves it.
 Everything happens on your computer: indexing, text recognition, search and
 the database. Recall contains no internet client and no cloud AI.
 
-> **Status.** The core product works: folders, indexing of documents and
-> images, keyword and file-name search, evidence, file watching and the
-> privacy dashboard. **Meaning-based search is not available yet**: its code
-> is built and unit-tested, but the embedding model (BAAI/bge-small-en-v1.5)
-> could not be downloaded and verified in the development environment yet.
-> See [What works](#what-works) and [docs/MODELS.md](docs/MODELS.md).
+> **Status.** All core features work: folders, indexing of documents and
+> images, meaning-based search, keyword and file-name search, evidence, file
+> watching and the privacy dashboard. Meaning-based search is new: it is
+> verified by automated tests with the real model, but hasn't been tried in
+> the installed app yet. See [What works](#what-works).
 
 ## How it works
 
@@ -27,9 +26,10 @@ the database. Recall contains no internet client and no cloud AI.
 2. **Recall reads them locally**: text from documents (with page numbers for
    PDFs), and text inside images with a small on-device OCR model. Text is
    split into passages and stored in a local SQLite index.
-3. **Search** by what you remember. Recall matches the words of your search
-   against passages and file names, ranks files, and explains why each one
-   matched.
+3. **Search** by what you remember. A small local AI model compares the
+   *meaning* of your search with every passage, so "groceries to buy" finds
+   your shopping list. Recall combines that with matching words and file
+   names, ranks files, and explains why each one matched.
 4. **Check the source.** *Show source* displays the matching passage
    highlighted inside its page. *The AI finds it. The source proves it.*
 5. **It stays up to date.** Recall watches your folders and re-indexes only
@@ -45,14 +45,14 @@ the database. Recall contains no internet client and no cloud AI.
 | Read text in images with local OCR (ocrs, ~3 million parameters) | Working |
 | Keyword search (SQLite FTS5, English word stems) with highlighted snippets and page numbers | Working |
 | File-name and title matching (finds images by name) | Working |
-| Hybrid ranking with plain-language "why it matched" reasons | Working for keywords + file names |
+| Meaning-based search (local embeddings, BAAI/bge-small-en-v1.5) | Working in automated tests with the real model; first app test pending |
+| Hybrid ranking (meaning + keywords + file names) with plain-language "why it matched" reasons | Working |
 | Evidence viewer: the passage highlighted within its page; *Open original* | Working |
 | Incremental indexing: unchanged files are never re-read | Working |
 | File watching: new, changed and deleted files picked up automatically | Working |
 | Privacy dashboard with measured facts | Working |
 | Privacy audit (`npm run audit:privacy`) | Passing |
 | Works with no internet connection (installed app) | Tested on Linux |
-| **Meaning-based search** (local embeddings, BAAI/bge-small-en-v1.5) | **Pending** — model not yet verified ([checkpoint](docs/MODELS.md#checkpoint-milestone-7-blocked-on-network-access-to-huggingfaceco)) |
 | OCR for scanned PDFs (pages without a text layer) | Not supported yet |
 | Optional local LLM ("Ask Recall") | Not started (optional) |
 
@@ -61,8 +61,8 @@ the database. Recall contains no internet client and no cloud AI.
 - **No network code.** The Windows, macOS and Linux builds contain no HTTP,
   TLS or WebSocket client, and the app window is restricted by a Content
   Security Policy to talking to Recall itself.
-- **No cloud AI.** OCR runs in-process on a local model file; so will
-  embeddings.
+- **No cloud AI.** OCR and meaning-based search run in-process on local
+  model files.
 - **Your files are only read**, never changed, moved, copied or uploaded.
 - **One local index**, `recall.db`, in your app-data folder
   (`%APPDATA%\ai.recall.desktop\` on Windows). Delete it to reset Recall.
@@ -75,7 +75,7 @@ the database. Recall contains no internet client and no cloud AI.
 | Purpose | Model | Parameters | Status |
 | --- | --- | --- | --- |
 | Text in images (OCR) | ocrs `text-detection` + `text-recognition` | 620,538 + 2,426,494 (counted from the files) | In use |
-| Meaning-based search | BAAI/bge-small-en-v1.5 | to be counted (expected ~33M) | Pending verification |
+| Meaning-based search | BAAI/bge-small-en-v1.5 | 33,212,160 (counted from the file) | In use |
 
 All models must have at most 500 million parameters and run locally.
 Sources, checksums, licences and what is still to verify are in
@@ -104,7 +104,7 @@ Build Tools and WebView2).
 
 ```bash
 npm install
-npm run download-models   # OCR model files (~12 MB) into models/, checksums verified
+npm run download-models   # AI model files (~145 MB) into models/, checksums verified
 npm run tauri dev         # first build takes a few minutes
 ```
 
@@ -118,8 +118,9 @@ Build an installer:
 npm run build:app         # downloads/verifies models, then `tauri build`
 ```
 
-The OCR models are bundled into the installer, so an installed Recall needs
-no downloads. Tested so far: the Linux `.deb` (18 MB) installed and run from
+The AI models are bundled into the installer, so an installed Recall needs
+no downloads (the embedding model makes it about 130 MB larger). Tested so
+far, before meaning-based search was added: the Linux `.deb` (18 MB) installed and run from
 a fresh profile **with no network access at all** — adding a folder,
 indexing, OCR, search and evidence all worked, and tracing the app process
 showed no connection attempts. The Windows installer built by GitHub
@@ -158,6 +159,10 @@ notify.
 
 ## Credits
 
+- **Meaning-based search:** [BAAI/bge-small-en-v1.5](https://huggingface.co/BAAI/bge-small-en-v1.5)
+  by the Beijing Academy of Artificial Intelligence (MIT), run with
+  [rten](https://github.com/robertknight/rten) and rten-text by Robert Knight
+  (MIT OR Apache-2.0). Recall uses the published model unmodified.
 - **OCR:** [ocrs](https://github.com/robertknight/ocrs) by Robert Knight and
   the Ocrs project contributors (MIT OR Apache-2.0). Its models are trained on
   Google's [HierText](https://github.com/google-research-datasets/hiertext)
@@ -165,8 +170,11 @@ notify.
 
 ## Limitations
 
-- Meaning-based search is pending the embedding model (see above); until
-  then, search matches words and file names, not meaning.
+- Meaning-based search uses an English model; other languages match by
+  keywords and file names only. Its threshold was tuned on a small
+  synthetic test set and may need adjusting on real libraries.
+- The first indexing of a large folder takes a while: each passage is run
+  through the model once (tens of milliseconds each).
 - Scanned PDFs (no text layer) are detected and reported, not OCR'd.
 - Keyword stemming is English-only; file-name matching is case-insensitive
   for ASCII letters only.

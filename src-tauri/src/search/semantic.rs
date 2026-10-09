@@ -11,10 +11,11 @@ use crate::files::FileKind;
 
 /// Passages less similar than this are not treated as meaning matches.
 ///
-/// TODO(Milestone 7 checkpoint): PLACEHOLDER, not calibrated. Similarity
-/// scales differ between models; pick this by testing BGE-small-en-v1.5 on
-/// test-data/ (related vs unrelated queries) once the real model is wired in.
-pub const MIN_SIMILARITY: f32 = 0.5;
+/// Calibrated for BAAI/bge-small-en-v1.5 on test-data/
+/// (`real_model_finds_test_files_by_meaning`): the right file scored
+/// 0.57–0.77, other files 0.41–0.55, and unrelated queries at most 0.46.
+/// Re-check this when changing the model.
+pub const MIN_SIMILARITY: f32 = 0.55;
 
 /// Nearest passages considered before keeping one per file.
 const CANDIDATES: usize = 200;

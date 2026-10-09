@@ -19,7 +19,7 @@ You need:
 
 ```bash
 npm install
-npm run download-models   # local OCR model files (~12 MB), checksum-verified
+npm run download-models   # local AI model files (~145 MB), checksum-verified
 npm run tauri dev         # runs the desktop app; first build takes a few minutes
 ```
 
@@ -37,7 +37,7 @@ cd src-tauri
 cargo test                   # backend unit tests (fast, no models needed)
 cargo clippy --all-targets   # lints; keep it at zero warnings
 cargo fmt                    # formatting
-RECALL_MODELS_DIR=../models cargo test --release -- --ignored   # tests that need the model files
+cargo test -- --ignored --nocapture   # tests that need the model files (see docs/MODELS.md)
 cd ..
 npm run audit:privacy        # no network code, no cloud AI, locked-down window
 ```
@@ -53,13 +53,14 @@ src-tauri/
   src/extract/         text from TXT, MD, PDF, DOCX
   src/ocr/             text from images (local ocrs model)
   src/indexing/        passages (chunk), embeddings (embed), the pipeline
-  src/embeddings/      the Embedder interface (model pending, see docs/MODELS.md)
+  src/embeddings/      the Embedder interface and the local BGE model (bge.rs)
   src/search/          keyword, meaning and file-name search; hybrid ranking
   src/database/        SQLite storage and migrations
   src/scanning.rs      runs the pipeline in the background (Tauri glue)
   src/watching.rs      re-scans folders when files change (Tauri glue)
 docs/                  API.md, ARCHITECTURE.md, FRONTEND_QUICKSTART.md, MODELS.md
-scripts/               model download, privacy audit, test-data generator
+scripts/               model download, privacy audit, test-data generator,
+                       BGE reference vectors (bge_reference.py)
 test-data/             synthetic files for tests and demos (never real documents)
 models/                downloaded model files (not in Git)
 ```
