@@ -9,13 +9,29 @@ use crate::database::embeddings;
 use crate::embeddings::Embedder;
 use crate::files::FileKind;
 
-/// Passages less similar than this are not treated as meaning matches.
-/// Chosen with `search::calibration` for BAAI/bge-small-en-v1.5; re-check
-/// both thresholds when changing the model.
+// Thresholds for BAAI/bge-small-en-v1.5, chosen with `search::calibration`
+// (24 documents, 34 searches). Re-check them when changing the model.
+//
+// No single similarity separates right from wrong documents well: at 0.55
+// alone, 23 of 25 right documents but also 21 wrong ones pass. The right
+// document is almost always the closest one, though, so a result must also
+// be within RELATIVE_MARGIN of the search's best passage: 23 right, 7 wrong.
+
+/// Passages less similar than this are never meaning matches.
 pub const MIN_SIMILARITY: f32 = 0.55;
 
-/// Similarity from which a passage counts as a certain meaning match.
-pub const FULL_SIMILARITY: f32 = 0.80;
+/// Passages further than this below the search's best passage are dropped.
+pub const RELATIVE_MARGIN: f32 = 0.06;
+
+/// Similarity from which a passage counts as a certain meaning match: the
+/// top of the range right documents scored (0.55–0.77).
+pub const FULL_SIMILARITY: f32 = 0.75;
+
+/// Whether a passage is a meaning match, given the best similarity any
+/// passage had for this search.
+pub fn is_match(similarity: f32, best: f32) -> bool {
+    similarity >= MIN_SIMILARITY && similarity >= best - RELATIVE_MARGIN
+}
 
 /// The meaning signal for ranking, 0–1: 0 at `MIN_SIMILARITY`, rising to 1
 /// at `FULL_SIMILARITY`. Raw similarities of unrelated text are far from 0,
@@ -56,10 +72,11 @@ pub fn search(
     };
     let nearest = embeddings::nearest(conn, embedder.model_id(), &query_vector, CANDIDATES)?;
 
+    let best = nearest.first().map_or(0.0, |&(_, similarity)| similarity);
     let mut seen_files = HashSet::new();
     let mut hits = Vec::new();
     for (chunk_id, similarity) in nearest {
-        if similarity < MIN_SIMILARITY {
+        if !is_match(similarity, best) {
             break; // sorted best first, so the rest are lower
         }
         let hit = passage(conn, chunk_id, similarity)?;
@@ -104,6 +121,14 @@ mod tests {
         assert!((score((MIN_SIMILARITY + FULL_SIMILARITY) / 2.0) - 0.5).abs() < 1e-6);
         assert_eq!(score(FULL_SIMILARITY), 1.0);
         assert_eq!(score(0.99), 1.0);
+    }
+
+    #[test]
+    fn matches_must_pass_the_minimum_and_be_close_to_the_best() {
+        assert!(is_match(0.70, 0.70));
+        assert!(is_match(0.66, 0.70));
+        assert!(!is_match(0.62, 0.70), "too far below the best");
+        assert!(!is_match(0.54, 0.54), "below the minimum");
     }
 
     #[test]

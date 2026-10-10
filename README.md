@@ -171,8 +171,9 @@ notify.
 ## Limitations
 
 - Meaning-based search uses an English model; other languages match by
-  keywords and file names only. Its threshold was tuned on a small
-  synthetic test set and may need adjusting on real libraries.
+  keywords and file names only. Its thresholds were tuned on 24
+  synthetic documents and 34 searches (docs/MODELS.md) and may need
+  adjusting on real libraries.
 - The first indexing of a large folder takes a while: each passage is run
   through the model once (tens of milliseconds each).
 - Scanned PDFs (no text layer) are detected and reported, not OCR'd.
