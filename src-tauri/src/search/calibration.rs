@@ -5,12 +5,14 @@
 //! deliberately share no words with the document they should find, because
 //! that's the case only meaning-based search can handle. The test prints the
 //! similarity of every search/document pair and the precision and recall of
-//! each candidate threshold, to choose the thresholds in `semantic.rs`.
+//! each candidate threshold, which is how the thresholds in `semantic.rs`
+//! were chosen, and checks the results of the rule Recall uses.
 //!
 //! Run: `cargo test calibration -- --ignored --nocapture` (needs the model).
 
 use crate::embeddings::bge::{BgeSmall, MODEL_SUBDIR};
 use crate::embeddings::{similarity, Embedder};
+use crate::search::semantic;
 use crate::test_support::real_models_dir;
 
 const DOCUMENTS: &[&str] = &[
@@ -114,6 +116,8 @@ fn calibration() {
 
     // (similarity, relevant) for every search/document pair.
     let mut pairs: Vec<(f32, bool)> = Vec::new();
+    // With the rule Recall uses (`semantic::is_match`).
+    let (mut found, mut wrong, mut top_right, mut unrelated_hits) = (0, 0, 0, 0);
     for (search, relevant) in SEARCHES {
         let query = model.embed_query(search).unwrap();
         let mut scored: Vec<(usize, f32)> = documents
@@ -129,6 +133,20 @@ fn calibration() {
             .collect();
         println!("{search:55} {}", shown.join("  "));
         pairs.extend(scored.iter().map(|&(i, s)| (s, relevant.contains(&i))));
+
+        let best = scored[0].1;
+        let matches: Vec<usize> = scored
+            .iter()
+            .filter(|&&(_, s)| semantic::is_match(s, best))
+            .map(|&(i, _)| i)
+            .collect();
+        found += matches.iter().filter(|i| relevant.contains(i)).count();
+        wrong += matches.iter().filter(|i| !relevant.contains(i)).count();
+        if relevant.is_empty() {
+            unrelated_hits += matches.len();
+        } else if relevant.contains(&scored[0].0) {
+            top_right += 1;
+        }
     }
 
     let relevant_total = pairs.iter().filter(|p| p.1).count();
@@ -147,4 +165,19 @@ fn calibration() {
     let mut relevant: Vec<f32> = pairs.iter().filter(|p| p.1).map(|p| p.0).collect();
     relevant.sort_by(f32::total_cmp);
     println!("\nrelevant similarities, sorted: {relevant:.3?}");
+
+    // Measured when the thresholds were chosen; a model or threshold change
+    // that makes search worse fails here.
+    println!(
+        "\nwith semantic::is_match: {found}/{relevant_total} right documents, {wrong} wrong, \
+         right document first for {top_right} of 24 searches, \
+         {unrelated_hits} matches for unrelated searches"
+    );
+    assert!(found >= 23, "right documents found: {found}");
+    assert!(wrong <= 7, "wrong documents: {wrong}");
+    assert!(top_right >= 23, "right document first: {top_right}");
+    assert!(
+        unrelated_hits <= 1,
+        "unrelated searches matched: {unrelated_hits}"
+    );
 }
