@@ -2,7 +2,8 @@
 //! ranked list with one result per file.
 //!
 //! Each file gets up to three scores between 0 and 1:
-//! - semantic: cosine similarity of its best passage (needs an embedding model)
+//! - semantic: how close in meaning its best passage is (`semantic::score`;
+//!   needs an embedding model)
 //! - keyword: share of the query's words found in its best passage
 //! - metadata: share of the query's words found in its file name or title
 //!
@@ -13,6 +14,8 @@
 //! could never score well. Both are tunable starting points, not measured
 //! optima. On equal scores, a file whose name matches comes first.
 
+#[cfg(test)]
+mod calibration;
 pub mod keyword;
 pub mod metadata;
 pub mod semantic;
@@ -106,7 +109,7 @@ pub fn search(
 
     for hit in semantic_hits {
         let result = entry(&mut results, hit.file_id, &hit.path, hit.kind);
-        result.signals.semantic = Some(f64::from(hit.similarity).clamp(0.0, 1.0));
+        result.signals.semantic = Some(semantic::score(hit.similarity));
         result.passage = Some(Passage {
             chunk_id: hit.chunk_id,
             page_number: hit.page_number,
