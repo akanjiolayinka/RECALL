@@ -16,11 +16,11 @@ export function LocationList({ locations, onRemove, onRescan, removingId }: Loca
   return (
     <ul className="divide-y rounded-xl border bg-card">
       {locations.map((location) => (
-        <li key={location.id} className="flex items-center gap-4 px-4 py-3">
+        <li key={location.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
           <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
             <Folder className="size-4" aria-hidden />
           </div>
-          <div className="min-w-0 flex-1 space-y-1">
+          <div className="min-w-48 flex-1 space-y-1">
             <div>
               <p className="truncate font-medium">{location.name}</p>
               <p className="truncate text-xs text-muted-foreground" title={location.path}>
@@ -29,7 +29,7 @@ export function LocationList({ locations, onRemove, onRescan, removingId }: Loca
             </div>
             <ScanProgress scan={location.scan} counts={location} className="max-w-sm" />
           </div>
-          <div className="flex shrink-0 gap-1">
+          <div className="ml-auto flex shrink-0 gap-1">
             <Button
               variant="ghost"
               size="sm"

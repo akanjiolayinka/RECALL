@@ -25,10 +25,10 @@ export function BackendStatus() {
   return (
     <div
       className="flex items-center gap-2 text-xs text-muted-foreground"
-      title={error ? errorMessage(error) : undefined}
+      title={error ? errorMessage(error) : label}
     >
       <span className={cn("size-2 rounded-full", dotColor)} aria-hidden />
-      <span>{label}</span>
+      <span className="sr-only md:not-sr-only">{label}</span>
     </div>
   );
 }

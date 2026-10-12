@@ -73,8 +73,8 @@ export function LibraryPage() {
           />
           <p className="text-xs text-muted-foreground">
             Recall reads the text of PDF, Word, text and Markdown files, and of images with its
-            local OCR model when installed. Everything stays on this computer. Click a file to see
-            the text Recall extracted.
+            local OCR model. Everything stays on this computer. Click a file to see the text Recall
+            extracted.
           </p>
           <FileBrowser />
         </>

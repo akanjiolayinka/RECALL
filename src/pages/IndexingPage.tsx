@@ -26,8 +26,8 @@ function LocationProgress({ location }: { location: Location }) {
     <li className="space-y-3 rounded-xl border bg-card p-4">
       <div className="flex items-center gap-3">
         <Folder className="size-4 text-muted-foreground" aria-hidden />
-        <p className="font-medium">{location.name}</p>
-        <p className="truncate text-xs text-muted-foreground" title={location.path}>
+        <p className="shrink-0 font-medium">{location.name}</p>
+        <p className="min-w-0 truncate text-xs text-muted-foreground" title={location.path}>
           {location.path}
         </p>
       </div>
@@ -43,7 +43,7 @@ function LocationProgress({ location }: { location: Location }) {
         </>
       )}
       {scan && (
-        <div className="grid grid-cols-5 gap-4 border-t pt-3">
+        <div className="grid grid-cols-2 gap-4 border-t pt-3 sm:grid-cols-3 lg:grid-cols-5">
           <Stat label="Files found" value={scan.filesFound} />
           <Stat label="New or changed" value={scan.filesChanged} />
           <Stat label="Documents read" value={scan.filesRead - scan.readFailed} />
@@ -79,9 +79,10 @@ export function IndexingPage() {
             ))}
           </ul>
           <p className="text-xs text-muted-foreground">
-            Recall finds supported files, fingerprints them to spot changes, and reads their text
-            (images with the local OCR model, when installed). Each time it starts it checks your
-            folders again; files that haven't changed aren't re-read.
+            Recall finds supported files, fingerprints them to spot changes, reads their text (images
+            with the local OCR model), then runs each new passage through the local AI model so you
+            can search by meaning. Each time it starts it checks your folders again; files that
+            haven't changed aren't re-read.
           </p>
         </>
       )}
