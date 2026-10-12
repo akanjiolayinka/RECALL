@@ -14,12 +14,12 @@ interface PrivacyFactProps {
 /** One verifiable statement on the Privacy page. */
 export function PrivacyFact({ label, value, evidence, positive }: PrivacyFactProps) {
   return (
-    <div className="grid grid-cols-[minmax(0,14rem)_1fr] gap-x-6 gap-y-1 px-5 py-4">
+    <div className="grid gap-x-6 gap-y-1 px-5 py-4 sm:grid-cols-[minmax(0,14rem)_1fr]">
       <dt className="text-sm text-muted-foreground">{label}</dt>
       <dd className={cn("text-sm font-semibold", positive && "text-emerald-700 dark:text-emerald-400")}>
         {value}
       </dd>
-      <dd className="col-start-2 text-xs text-muted-foreground">{evidence}</dd>
+      <dd className="text-xs sm:col-start-2 text-muted-foreground">{evidence}</dd>
     </div>
   );
 }

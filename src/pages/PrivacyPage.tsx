@@ -73,8 +73,8 @@ export function PrivacyPage() {
         />
         <PrivacyFact
           label="Model downloads"
-          value="Separate, one-time step"
-          evidence="AI model files are downloaded once with npm run download-models, a setup script outside the app that verifies each file's checksum."
+          value="None while Recall runs"
+          evidence="The AI model files ship inside the installer, so Recall never downloads anything. (Developers building Recall fetch them once with npm run download-models, which verifies each file's checksum.)"
         />
       </Section>
 

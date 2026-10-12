@@ -36,7 +36,7 @@ export function FileBrowser() {
     <section className="flex flex-col gap-3" aria-label="Files">
       <div className="flex flex-wrap items-center gap-3">
         <h2 className="mr-auto text-lg font-semibold">Files</h2>
-        <div className="relative w-64">
+        <div className="relative w-full sm:w-64">
           <Search
             className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
             aria-hidden
@@ -80,10 +80,10 @@ export function FileBrowser() {
               <thead className="border-b bg-muted/40 text-left text-xs text-muted-foreground">
                 <tr>
                   <th className="px-4 py-2 font-medium">Name</th>
-                  <th className="w-24 px-4 py-2 font-medium">Type</th>
-                  <th className="w-32 px-4 py-2 font-medium">Status</th>
-                  <th className="w-28 px-4 py-2 text-right font-medium">Size</th>
-                  <th className="w-32 px-4 py-2 font-medium">Modified</th>
+                  <th className="hidden w-24 px-4 py-2 font-medium lg:table-cell">Type</th>
+                  <th className="w-28 px-4 py-2 font-medium sm:w-32">Status</th>
+                  <th className="hidden w-28 px-4 py-2 text-right font-medium sm:table-cell">Size</th>
+                  <th className="hidden w-32 px-4 py-2 font-medium md:table-cell">Modified</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
@@ -112,14 +112,14 @@ export function FileBrowser() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-2 text-muted-foreground">{FILE_KIND_LABELS[file.kind]}</td>
+                    <td className="hidden px-4 py-2 text-muted-foreground lg:table-cell">{FILE_KIND_LABELS[file.kind]}</td>
                     <td className="px-4 py-2 text-xs">
                       <FileStatusLabel file={file} />
                     </td>
-                    <td className="px-4 py-2 text-right whitespace-nowrap text-muted-foreground tabular-nums">
+                    <td className="hidden px-4 py-2 text-right whitespace-nowrap text-muted-foreground tabular-nums sm:table-cell">
                       {formatBytes(file.sizeBytes)}
                     </td>
-                    <td className="px-4 py-2 text-muted-foreground">{formatDate(file.modifiedAt)}</td>
+                    <td className="hidden px-4 py-2 text-muted-foreground md:table-cell">{formatDate(file.modifiedAt)}</td>
                   </tr>
                 ))}
               </tbody>

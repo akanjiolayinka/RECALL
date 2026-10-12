@@ -43,7 +43,7 @@ export default function App() {
       )}
       <div className="flex min-h-0 flex-1">
         <Sidebar current={page} onNavigate={setPage} />
-        <main className="min-w-0 flex-1 overflow-y-auto px-10 py-8">
+        <main className="min-w-0 flex-1 overflow-y-auto px-5 py-6 md:px-10 md:py-8">
           <Page />
         </main>
       </div>
