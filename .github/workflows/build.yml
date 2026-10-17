@@ -89,14 +89,23 @@ jobs:
           pip install --quiet sentence-transformers
           python scripts/bge_reference.py "$BGE_REVISION" models/bge-small-en-v1.5/reference.json
 
-      # The tests that need real model files: OCR on the sample receipt,
-      # BGE's parameter count and similarity checks, and meaning-based search
-      # over test-data/.
-      - name: Real-model tests
-        run: cargo test -- --ignored --nocapture
+      # The tests that need real model files (OCR on the sample receipt, BGE's
+      # parameter count and similarity checks, meaning search over test-data/
+      # and the calibration set), run with networking switched off: inside an
+      # empty network namespace, after checking that the internet really is
+      # unreachable. Shows Recall's indexing and search need no internet.
+      - name: Real-model tests, offline
         working-directory: src-tauri
         env:
           RECALL_MODELS_DIR: ${{ github.workspace }}/models
+        run: |
+          sudo unshare --net -- sudo -u "$USER" env "PATH=$PATH" "HOME=$HOME" \
+            "CARGO_HOME=$CARGO_HOME" "RECALL_MODELS_DIR=$RECALL_MODELS_DIR" sh -c '
+              if curl -s -m 5 -o /dev/null https://huggingface.co; then
+                echo "The network is still reachable; this test would prove nothing."; exit 1
+              fi
+              echo "Confirmed: no network access."
+              cargo test --offline -- --ignored --nocapture'
 
   windows-installer:
     name: Windows installer
