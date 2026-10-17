@@ -52,7 +52,7 @@ the database. Recall contains no internet client and no cloud AI.
 | File watching: new, changed and deleted files picked up automatically | Working |
 | Privacy dashboard with measured facts | Working |
 | Privacy audit (`npm run audit:privacy`) | Passing |
-| Works with no internet connection (installed app) | Tested on Linux |
+| Works with no internet connection | Installed app tested on Linux (before meaning search); indexing, OCR, meaning and keyword search checked with networking switched off on every build (CI); Windows offline test pending |
 | OCR for scanned PDFs (pages without a text layer) | Not supported yet |
 | Optional local LLM ("Ask Recall") | Not started (optional) |
 
