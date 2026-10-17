@@ -107,7 +107,7 @@ SQLite's `user_version`. **Never edit a released migration; add a new one.**
 
 | Signal | Module | How |
 | --- | --- | --- |
-| Meaning | `search/semantic.rs` | Cosine similarity between the query's embedding and each passage's (needs a model) |
+| Meaning | `search/semantic.rs` | Cosine similarity between the query's embedding and each passage's (needs a model). A passage counts only if it reaches 0.55 **and** is within 0.06 of the search's best passage; its score then rises from 0 at 0.55 to 1 at 0.75, so borderline matches rank low. Thresholds measured with `search/calibration.rs` ([MODELS.md](MODELS.md)) |
 | Keywords | `search/keyword.rs` | SQLite FTS5 with English stemming; share of the query's words in the best passage, BM25 to break ties |
 | File name / title | `search/metadata.rs` | Share of the query's words that start a word of the file name or document title |
 
@@ -122,7 +122,7 @@ Query ─┬─► meaning  (if a model is installed)
         one result per file, best first, with plain-language reasons
 ```
 
-The weights are a tunable starting point, not a measured optimum. Queries
+The weights are a tunable starting point, not a measured optimum (the meaning thresholds are measured). Queries
 are reduced to quoted words before they reach FTS5, so nothing a user types
 can break the query. Filler words ("where", "my", "the") are dropped.
 
