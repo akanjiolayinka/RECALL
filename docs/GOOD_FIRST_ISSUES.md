@@ -47,7 +47,7 @@ changed.
 
 ### Write down how Recall builds on macOS (docs)
 
-**Why.** Nobody has tried Recall on a Mac yet. If you have one, simply
+**Why.** Nobody has tried Recall on a Mac yet. If you have one, just
 following the setup steps and writing down what happens is very useful.
 
 **Where.** Follow [CONTRIBUTING.md](../CONTRIBUTING.md), then update the

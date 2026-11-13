@@ -13,7 +13,7 @@ A private working file for the maintainer. Delete it before merging
 - [x] 5. GitHub templates and setup
 - [x] 6. AGENTS.md / CLAUDE.md
 - [x] 7. Demo GIF
-- [ ] 8. Final check
+- [x] 8. Final check
 
 ## How Recall works, end to end
 
@@ -270,3 +270,27 @@ need updating to match. The OCR test on the new receipt was run here.
 implies owning recall.ai, to `io.github.akanjiolayinka.recall`. Cheapest
 now, before any public release. A test build that's already installed will
 start with an empty index after updating; noted in the changelog.
+
+## Final check (milestone 8)
+
+- All relative links and `#section` anchors in the 22 Markdown files
+  resolve. Every `npm run` command mentioned anywhere exists in
+  `package.json`.
+- Passing here: `npm test` (9), `npm run build`, `npm run audit:privacy`,
+  `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings`,
+  `cargo test` (94, 7 ignored), and the real OCR test on the regenerated
+  receipt. Not run here: the 6 tests that need the BGE model (Hugging Face
+  is blocked in this environment); CI runs them after the push.
+- Bugs found and fixed in config rather than code: `rust-version` in
+  `Cargo.toml` said 1.82 but the dependencies need 1.94.
+- Not a bug, but worth knowing: `tauri.conf.json` sets the window's
+  `minWidth` to 900, so the sidebar's icon-only layout (below 768 px) only
+  appears in mock mode in a browser.
+
+## Still to do by hand
+
+See `OPEN_SOURCE_SETUP.md`. In short: fill in the two contact emails, push
+and check CI (calibration numbers), rename the default branch to `main`,
+turn on Discussions and private vulnerability reporting, create the labels,
+protect `main`, do the agreed history clean-up, make the first release, and
+delete this file and `OPEN_SOURCE_SETUP.md` before merging.
