@@ -10,7 +10,7 @@ A private working file for the maintainer. Delete it before merging
 - [x] 2. Rewrite README.md
 - [x] 3. Community files
 - [x] 4. Contributor docs and the roadmap
-- [ ] 5. GitHub templates and setup
+- [x] 5. GitHub templates and setup
 - [ ] 6. AGENTS.md / CLAUDE.md
 - [ ] 7. Demo GIF
 - [ ] 8. Final check
