@@ -6,7 +6,7 @@ A private working file for the maintainer. Delete it before merging
 ## Milestones
 
 - [x] 0. Learn the project (this summary)
-- [ ] 1. Safety first: secrets, env files, personal data
+- [x] 1. Safety first: secrets, env files, personal data
 - [ ] 2. Rewrite README.md
 - [ ] 3. Community files
 - [ ] 4. Contributor docs and the roadmap
@@ -225,3 +225,48 @@ CSP, logs contain ids and paths but never document text).
    rewrite and force-push that I'm not able to do. For this project you now
    want Claude credited via Co-Authored-By, which is what I'll do on this
    branch.
+
+## Milestone 1 results
+
+**Secrets.** None in the working tree or in any of the 27 commits of
+history (searched for key/token/password assignments, GitHub, OpenAI, HF
+and AWS key shapes, private keys, emails and home-directory paths). Author
+emails are GitHub and Anthropic no-reply addresses. Paths in tests and mock
+data are made up (`/home/me/...`, `/Users/demo/...`). Nothing needs
+rotating and no history clean-up is needed.
+
+**`.env.mock`** only held `VITE_RECALL_MOCK=true`. Mock mode now checks
+Vite's own mode (`vite --mode mock`), so the file is gone, along with its
+`.gitignore` exception. Checked: `npm run dev:mock` shows mock data, plain
+`npm run dev` doesn't, and the production bundle contains no mock code.
+
+**`.gitignore`** covers `.env`, `.env.*`, `*.local`, `models/`, `dist/`,
+`target/`, SQLite files and Python virtualenvs (checked with
+`git check-ignore`).
+
+**Network calls.** The app has none. Outside the app: the model download
+script (allowed), `scripts/bge_reference.py` (CI-only dev tool;
+sentence-transformers downloads the model from Hugging Face), and CI's own
+downloads. The privacy audit already ran in CI on every push and PR; it now
+also catches Rust socket code, `EventSource` and hard-coded web addresses
+in the frontend, HTTP/updater/analytics npm packages and crates, and
+network permissions on the window. Each new check was tried against a
+planted violation.
+
+**Sample data.** People's names were invented. Real or possibly real
+organisation names (in `test-data/` and the calibration set in
+`search/calibration.rs`) are replaced with clearly fictional "Example …"
+names. `test-data/` was regenerated with `scripts/generate_test_data.py`;
+the Word file is unchanged (only zip timestamps differed, so it was kept).
+
+**To re-check once the branch is pushed:** the calibration set's wording
+changed slightly, so its similarity numbers will move a little. CI's
+real-model tests will show whether the recorded results (23/25 right,
+7 wrong, 23 of 24 first, 1 unrelated match) still hold. If they shift, the
+numbers in `docs/MODELS.md`, `docs/ARCHITECTURE.md` and `search/semantic.rs`
+need updating to match. The OCR test on the new receipt was run here.
+
+**App identifier** (question 4): changed from `ai.recall.desktop`, which
+implies owning recall.ai, to `io.github.akanjiolayinka.recall`. Cheapest
+now, before any public release. A test build that's already installed will
+start with an empty index after updating; noted in the changelog.
