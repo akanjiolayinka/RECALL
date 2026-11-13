@@ -12,7 +12,7 @@ A private working file for the maintainer. Delete it before merging
 - [x] 4. Contributor docs and the roadmap
 - [x] 5. GitHub templates and setup
 - [x] 6. AGENTS.md / CLAUDE.md
-- [ ] 7. Demo GIF
+- [x] 7. Demo GIF
 - [ ] 8. Final check
 
 ## How Recall works, end to end
