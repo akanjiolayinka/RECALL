@@ -13,9 +13,11 @@ use crate::files::FileKind;
 // (24 documents, 34 searches). Re-check them when changing the model.
 //
 // No single similarity separates right from wrong documents well: at 0.55
-// alone, 23 of 25 right documents but also 21 wrong ones pass. The right
+// alone, 23 of 25 right documents but also 26 wrong ones pass. The right
 // document is almost always the closest one, though, so a result must also
-// be within RELATIVE_MARGIN of the search's best passage: 23 right, 7 wrong.
+// be within RELATIVE_MARGIN of the search's best passage: 23 right, 10 wrong.
+// (Measured on the current, fully fictional calibration set; with the
+// earlier wording, which named real businesses, it was 23 right, 7 wrong.)
 
 /// Passages less similar than this are never meaning matches.
 pub const MIN_SIMILARITY: f32 = 0.55;

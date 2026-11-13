@@ -120,7 +120,10 @@ whether they hold up.
 
 **Where.** `src-tauri/src/search/calibration.rs`. It needs the real model,
 so run it in CI or follow [DEVELOPMENT.md](DEVELOPMENT.md#tests-that-need-the-real-models).
-All examples must be invented, with no real people or businesses.
+All examples must be invented, with no real people or businesses, and
+each document needs its own made-up names. Reusing one placeholder word
+across many documents makes them look alike to the model and skews the
+results.
 
 **Done when** the set covers longer, multi-paragraph documents and more
 near-misses. If the thresholds in `src-tauri/src/search/semantic.rs` need
