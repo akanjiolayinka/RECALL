@@ -127,7 +127,7 @@ mod tests {
         let receipt = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .join("../test-data/images/Headphones receipt.png");
         let text = &ocr.read_image(&receipt).unwrap().pages[0].text;
-        assert!(text.contains("SOUNDWAVE ELECTRONICS"), "{text}");
+        assert!(text.contains("EXAMPLE ELECTRONICS"), "{text}");
         assert!(text.contains("Wireless headphones NGN 45,000"), "{text}");
         assert!(text.contains("TOTAL NGN 50,000"), "{text}");
     }
