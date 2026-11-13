@@ -1,0 +1,29 @@
+# Labels for this repository. GitHub doesn't read this file by itself:
+# create them once by hand, or with a tool such as github-label-sync.
+- name: good first issue
+  color: "7057ff"
+  description: A self-contained task for someone new to Recall
+- name: help wanted
+  color: "008672"
+  description: Open for anyone to pick up
+- name: bug
+  color: "d73a4a"
+  description: Something doesn't work the way it should
+- name: enhancement
+  color: "a2eeef"
+  description: A new feature or an improvement
+- name: docs
+  color: "0075ca"
+  description: Documentation
+- name: area:frontend
+  color: "fbca04"
+  description: React and TypeScript interface (src/)
+- name: area:backend
+  color: "f9d0c4"
+  description: Rust backend (src-tauri/)
+- name: area:search
+  color: "c5def5"
+  description: Search quality, ranking and models
+- name: area:packaging
+  color: "bfd4f2"
+  description: Installers, releases and CI

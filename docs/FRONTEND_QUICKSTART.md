@@ -38,8 +38,13 @@ files, scans with progress, search results and evidence. An amber banner
 reads "Mock mode — showing fake development data". Click **Library → Add
 folder** to get mock files, then search for "budget" or "lease".
 
+The mock is there for building screens, not for judging search. Its files
+are invented (they're not the ones in `test-data/`), its search only matches
+words in file names, and meaning search and OCR aren't simulated, so the
+Privacy page shows both as not installed.
+
 Mock mode exists only in development. It turns on only when Vite runs in
-dev mode **and** `VITE_RECALL_MOCK=true` (set in `.env.mock`); production
+dev mode **and** in "mock" mode (`vite --mode mock`); production
 builds strip it out entirely.
 
 To run the real desktop app instead (needs Rust and the Tauri prerequisites,

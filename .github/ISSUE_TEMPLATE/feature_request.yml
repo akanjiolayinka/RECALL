@@ -1,0 +1,35 @@
+name: Feature request
+description: Suggest something Recall could do.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        If your idea is still taking shape, a [discussion](https://github.com/akanjiolayinka/RECALL/discussions) is a good place to start. [ROADMAP.md](https://github.com/akanjiolayinka/RECALL/blob/HEAD/ROADMAP.md) lists what's already planned.
+
+        Recall runs entirely on your computer. Features that need the internet, an account, an API key, telemetry or a cloud AI service won't be accepted, however useful they'd be.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Describe the situation you were in and what got in the way.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Anything else you've considered?
+      description: Other approaches, workarounds you use now, or similar features in other apps.
+  - type: checkboxes
+    id: local
+    attributes:
+      label: Stays local
+      options:
+        - label: This works without any network access, account or API key.
+          required: true

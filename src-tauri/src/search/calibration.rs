@@ -17,29 +17,29 @@ use crate::test_support::real_models_dir;
 
 const DOCUMENTS: &[&str] = &[
     // 0
-    "Access Bank account statement for March 2026. Opening balance NGN 312,450. Transfers out: rent NGN 150,000; school fees NGN 85,000. Closing balance NGN 61,920.",
+    "Example Bank account statement for March 2026. Opening balance NGN 312,450. Transfers out: rent NGN 150,000; school fees NGN 85,000. Closing balance NGN 61,920.",
     // 1
-    "Lagos University Teaching Hospital. Your appointment with the cardiology clinic is on 14 July 2026 at 9:30am. Please bring your previous ECG results and arrive fasting.",
+    "Example General Hospital, Lagos. Your appointment with the cardiology clinic is on 14 July 2026 at 9:30am. Please bring your previous ECG results and arrive fasting.",
     // 2
-    "Booking confirmation PNR K7Q2LM. Lagos (LOS) to Nairobi (NBO), Kenya Airways KQ533, departing 3 August 2026 at 06:15. One checked bag of 23 kg included.",
+    "Booking confirmation PNR K7Q2LM. Lagos (LOS) to Nairobi (NBO), Example Air EX533, departing 3 August 2026 at 06:15. One checked bag of 23 kg included.",
     // 3
-    "Your comprehensive motor insurance policy for the Toyota Corolla (reg. KJA-482-AB) renews on 1 September 2026. Annual premium: NGN 96,000.",
+    "Your comprehensive motor insurance policy for your saloon car (reg. KJA-482-AB) renews on 1 September 2026. Annual premium: NGN 96,000.",
     // 4
-    "Greenfield Primary School, first term 2026/2027. Tuition NGN 180,000, uniform NGN 22,000, books NGN 15,500. Payment due before resumption on 8 September.",
+    "Example Primary School, first term 2026/2027. Tuition NGN 180,000, uniform NGN 22,000, books NGN 15,500. Payment due before resumption on 8 September.",
     // 5
     "Blend tomatoes, red peppers and onions. Fry the paste in oil with curry and thyme, add stock and washed rice, then cover and cook on low heat for 30 minutes.",
     // 6
-    "FitZone Ikeja membership: 12 months, access to the weights room, swimming pool and evening classes. Cancel with 30 days' notice.",
+    "Example Gym, Ikeja. Membership: 12 months, access to the weights room, swimming pool and evening classes. Cancel with 30 days' notice.",
     // 7
-    "We are pleased to offer you the position of Data Analyst at Brightpath Ltd with an annual salary of NGN 9,600,000, starting 1 November 2026.",
+    "We are pleased to offer you the position of Data Analyst at Example Ltd with an annual salary of NGN 9,600,000, starting 1 November 2026.",
     // 8
-    "Ikeja Electric prepaid token purchase: 120.5 kWh for NGN 25,000, meter number 0412 7789 551.",
+    "Prepaid electricity token purchase: 120.5 kWh for NGN 25,000, meter number 0412 7789 551.",
     // 9
-    "Together with their families, Ada and Emeka invite you to celebrate their marriage on Saturday 12 December 2026 at the Civic Centre, Victoria Island. Reception follows.",
+    "Together with their families, Ada and Emeka invite you to celebrate their marriage on Saturday 12 December 2026 at the town hall, Victoria Island. Reception follows.",
     // 10
-    "Warranty card: Samsung Galaxy A55, serial R58T21. Covered for 24 months against manufacturing defects. Screen damage and water damage are not covered.",
+    "Warranty card: Example X5 phone, serial R58T21. Covered for 24 months against manufacturing defects. Screen damage and water damage are not covered.",
     // 11
-    "Nigeria Immigration Service: to renew your passport, book an appointment online, pay the fee, and bring your old passport and national identity number (NIN) slip.",
+    "Immigration office: to renew your passport, book an appointment online, pay the fee, and bring your old passport and national identity number (NIN) slip.",
     // 12
     "Dr. Okafor. Amoxicillin 500 mg, one capsule three times daily for 7 days. Paracetamol as needed for fever. Review in one week.",
     // 13
@@ -51,7 +51,7 @@ const DOCUMENTS: &[&str] = &[
     // 16
     "The estimated project budget is NGN 2,500,000 in total. Raised beds and soil: NGN 1,100,000. Rainwater tank and pipes: NGN 650,000.",
     // 17
-    "SOUNDWAVE ELECTRONICS 14 Market Road, Ikeja Wireless headphones NGN 45,000 Carrying case NGN 5,000 TOTAL NGN 50,000 Paid by card.",
+    "EXAMPLE ELECTRONICS 14 Example Road, Ikeja Wireless headphones NGN 45,000 Carrying case NGN 5,000 TOTAL NGN 50,000 Paid by card.",
     // 18
     "Total marketing spend for the quarter is capped at NGN 4,000,000, split between radio adverts, social media and two community events.",
     // 19
@@ -61,9 +61,9 @@ const DOCUMENTS: &[&str] = &[
     // 21
     "Curriculum vitae. Chioma Nwosu. Experience: 4 years as a secondary school mathematics teacher. Skills: Excel, lesson planning, public speaking.",
     // 22
-    "Service at Coscharis Motors: engine oil and filter changed, brake pads replaced, tyres rotated. Next service due at 45,000 km.",
+    "Service at Example Motors: engine oil and filter changed, brake pads replaced, tyres rotated. Next service due at 45,000 km.",
     // 23
-    "Invoice from QuickFix Plumbing: repaired leaking kitchen sink pipe and replaced the bathroom tap. Labour and parts NGN 18,500.",
+    "Invoice from Example Plumbing: repaired leaking kitchen sink pipe and replaced the bathroom tap. Labour and parts NGN 18,500.",
 ];
 
 /// (search, documents it should find). An empty list: it should find nothing.

@@ -1,5 +1,6 @@
-# Runs on every push: checks that everything passes, and builds the Windows
-# installer. The installer appears under the run's "Artifacts" on GitHub.
+# Runs on every push and pull request: tests, lints, the frontend build, the
+# privacy audit and the real-model tests, plus a Windows installer that
+# appears under the run's "Artifacts" on GitHub.
 name: Build
 
 on:
@@ -126,7 +127,7 @@ jobs:
 
       - run: npm ci
 
-      # Downloads and checksum-verifies the OCR models (bundled into the
+      # Downloads and checksum-verifies the AI models (bundled into the
       # installer), then runs `tauri build`.
       - name: Build the installer
         run: npm run build:app

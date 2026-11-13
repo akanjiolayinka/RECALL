@@ -126,12 +126,12 @@ def main() -> None:
     write_pdf(
         ROOT / "pdf" / "Tenancy Agreement - Flat 4B.pdf",
         "Tenancy Agreement - Flat 4B",
-        "Lekki Homes Ltd",
+        "Example Lettings Ltd",
         [
             [
                 "# Tenancy Agreement",
                 "Property: Flat 4B, 12 Palm Avenue.",
-                "Tenant: Tunde Bello. Landlord: Lekki Homes Ltd.",
+                "Tenant: Tunde Bello. Landlord: Example Lettings Ltd.",
                 "Term: twelve months starting 1 June 2026.",
             ],
             [
@@ -184,8 +184,8 @@ def main() -> None:
     write_receipt_image(
         ROOT / "images" / "Headphones receipt.png",
         [
-            "SOUNDWAVE ELECTRONICS",
-            "14 Market Road, Ikeja",
+            "EXAMPLE ELECTRONICS",
+            "14 Example Road, Ikeja",
             "Date: 12/04/2026",
             "Wireless headphones   NGN 45,000",
             "Carrying case         NGN  5,000",

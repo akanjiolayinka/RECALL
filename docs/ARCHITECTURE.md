@@ -84,7 +84,7 @@ PDF parsing panics are caught so one bad file can't stop the app.
 ## The database
 
 One SQLite file, `recall.db`, in the OS app-data folder
-(`%APPDATA%\ai.recall.desktop\` on Windows). WAL mode lets a scan write while
+(`%APPDATA%\io.github.akanjiolayinka.recall\` on Windows; see the README for macOS and Linux). WAL mode lets a scan write while
 the UI reads; every caller opens its own short-lived connection.
 
 | Table | Holds |
@@ -153,9 +153,13 @@ parameter counts and the verification checklist: [MODELS.md](MODELS.md).
 - **The window is locked down.** A Content Security Policy only allows the
   frontend to talk to the Recall backend (`connect-src ipc: http://ipc.localhost`).
 - **No cloud AI.** All inference runs in-process on local model files.
-- **Checked, not assumed.** `npm run audit:privacy` verifies all of the above
-  and fails if any of it changes.
-- Logs contain technical errors and file ids, never document text.
+- **Checked, not assumed.** `npm run audit:privacy` checks for network
+  libraries in the Rust dependencies, socket code, web requests or addresses
+  in the frontend, network or analytics npm packages, the CSP and the
+  window's permissions, and fails if it finds any. It runs in CI on every
+  push and pull request.
+- Logs contain technical errors, file ids and folder paths, never document
+  text.
 - The only downloads are the one-time model files, done by a separate
   setup script, never by the app.
 
@@ -181,7 +185,11 @@ it fresh from backend events. See [FRONTEND_QUICKSTART.md](FRONTEND_QUICKSTART.m
 | --- | --- | --- |
 | How a result card looks | `src/components/search/SearchResultCard.tsx` | Rust, database |
 | Ranking weights | `src-tauri/src/search/mod.rs` (`WEIGHTS`) | UI |
+| Meaning-match thresholds | `src-tauri/src/search/semantic.rs`, re-measured with `search/calibration.rs` | UI |
 | Supported file types | `files/kind.rs` + `extract/` | UI (add a label in `FileKindIcon.tsx`) |
 | Passage size | `indexing/chunk.rs` (`TARGET_CHARS`) | UI |
 | The database schema | a new file in `database/migrations/` | UI |
 | The embedding model | an `Embedder` implementation + `embeddings::load()` | indexing, search, UI |
+
+For running, debugging and common setup problems, see
+[DEVELOPMENT.md](DEVELOPMENT.md).
