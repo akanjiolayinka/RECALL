@@ -84,7 +84,7 @@ PDF parsing panics are caught so one bad file can't stop the app.
 ## The database
 
 One SQLite file, `recall.db`, in the OS app-data folder
-(`%APPDATA%\ai.recall.desktop\` on Windows). WAL mode lets a scan write while
+(`%APPDATA%\io.github.akanjiolayinka.recall\` on Windows; see the README for macOS and Linux). WAL mode lets a scan write while
 the UI reads; every caller opens its own short-lived connection.
 
 | Table | Holds |

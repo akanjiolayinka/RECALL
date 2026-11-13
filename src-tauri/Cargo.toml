@@ -5,8 +5,9 @@ description = "Recall: your private AI memory. Everything searchable. Nothing up
 authors = ["Recall contributors"]
 license = "MIT"
 edition = "2021"
-# Oldest Rust version known to build Recall (uses Option::is_none_or).
-rust-version = "1.82"
+# Oldest Rust version that can build Recall: the rten inference runtime
+# needs 1.94.
+rust-version = "1.94"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
