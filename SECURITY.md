@@ -10,8 +10,8 @@ fix them before they're public.
 Use GitHub's private vulnerability reporting: go to the
 [Security tab](https://github.com/akanjiolayinka/RECALL/security) and click
 **Report a vulnerability**. Only the maintainer can see the report. If that
-doesn't work for you, email **[SECURITY CONTACT EMAIL — maintainer to fill
-in before publishing]**.
+doesn't work for you, email
+akanjiolayinka01@gmail.com.
 
 Please don't open a public issue, discussion or pull request for a security
 problem.

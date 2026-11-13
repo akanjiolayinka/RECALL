@@ -5,12 +5,8 @@ this file before merging `docs/open-source-setup`.
 
 ## Fill in the placeholders
 
-- [ ] Put a contact email in `CODE_OF_CONDUCT.md` (search for
-      "CONTACT EMAIL"). It can be a dedicated address rather than your
-      personal one.
-- [ ] Put a security contact email in `SECURITY.md` (search for
-      "SECURITY CONTACT EMAIL"), or remove that sentence if GitHub's
-      private reporting is enough for you.
+- [x] Put a contact email in `CODE_OF_CONDUCT.md`.
+- [x] Put a security contact email in `SECURITY.md`.
 - [ ] Check you're happy with the promises made on your behalf:
       acknowledging security reports "within a week" (`SECURITY.md`), and
       the merge rules in `GOVERNANCE.md`.
