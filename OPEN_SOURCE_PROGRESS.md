@@ -11,7 +11,7 @@ A private working file for the maintainer. Delete it before merging
 - [x] 3. Community files
 - [x] 4. Contributor docs and the roadmap
 - [x] 5. GitHub templates and setup
-- [ ] 6. AGENTS.md / CLAUDE.md
+- [x] 6. AGENTS.md / CLAUDE.md
 - [ ] 7. Demo GIF
 - [ ] 8. Final check
 
