@@ -8,7 +8,7 @@ A private working file for the maintainer. Delete it before merging
 - [x] 0. Learn the project (this summary)
 - [x] 1. Safety first: secrets, env files, personal data
 - [x] 2. Rewrite README.md
-- [ ] 3. Community files
+- [x] 3. Community files
 - [ ] 4. Contributor docs and the roadmap
 - [ ] 5. GitHub templates and setup
 - [ ] 6. AGENTS.md / CLAUDE.md
