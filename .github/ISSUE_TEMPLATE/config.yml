@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and ideas
+    url: https://github.com/akanjiolayinka/RECALL/discussions
+    about: Ask how something works, get help with setup, or talk through an idea.
+  - name: Report a security problem
+    url: https://github.com/akanjiolayinka/RECALL/security/advisories/new
+    about: Anything that could let data leave your computer. Reported privately.

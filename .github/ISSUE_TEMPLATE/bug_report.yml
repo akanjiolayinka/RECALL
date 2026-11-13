@@ -1,0 +1,55 @@
+name: Bug report
+description: Something in Recall doesn't work the way it should.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this. Please don't attach your own documents, or screenshots that show what's in them. If a file is needed to show the problem, a small made-up one is best.
+
+        If the bug could let data leave your computer, don't report it here. Follow [SECURITY.md](https://github.com/akanjiolayinka/RECALL/blob/HEAD/SECURITY.md) instead.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead? Include the exact error message if there was one.
+      placeholder: |
+        1. Added a folder with ...
+        2. Searched for ...
+        3. Expected ..., but ...
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Windows
+        - macOS
+        - Linux
+    validations:
+      required: true
+  - type: input
+    id: os-version
+    attributes:
+      label: OS version
+      placeholder: e.g. Windows 11 23H2, macOS 15, Ubuntu 24.04
+  - type: input
+    id: recall-version
+    attributes:
+      label: Which Recall?
+      description: The commit you built from, or the CI run you downloaded the installer from.
+      placeholder: e.g. built from commit 1a2b3c4, or installer from Build run #42
+    validations:
+      required: true
+  - type: textarea
+    id: files
+    attributes:
+      label: Files involved
+      description: If this is about a particular file not being read or found, what type is it and roughly how big? Was it created by a particular app?
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log output
+      description: If you ran Recall with `npm run tauri dev`, paste any lines starting with `recall:` from the terminal. They contain file IDs and folder paths but never file contents; remove anything you'd rather not share.
+      render: text
