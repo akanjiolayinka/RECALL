@@ -5,7 +5,10 @@
 [![Build](https://github.com/akanjiolayinka/RECALL/actions/workflows/build.yml/badge.svg)](https://github.com/akanjiolayinka/RECALL/actions/workflows/build.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-<!-- DEMO GIF: docs/assets/recall-demo.gif goes here -->
+![A short tour of Recall's interface: adding a folder, watching it get indexed, searching for "where is my lease" and opening the highlighted passage from the matching file.](docs/assets/recall-demo.gif)
+
+*A tour of the interface, recorded in mock mode with made-up files. In the
+real app, search also matches by meaning across the text of your own files.*
 
 Recall is a free desktop app that searches the files on your computer by
 what they say, not just what they're called. You describe what you remember,
