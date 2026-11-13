@@ -24,9 +24,9 @@ Recall also looks in `$RECALL_MODELS_DIR` if that is set.
 
 ## OCR: ocrs
 
-Chosen over PaddleOCR because PaddleOCR's model hosts (Baidu, Hugging Face)
-were unreachable from the development environment, and because ocrs is pure
-Rust (no native libraries to install or ship on Windows).
+Chosen over PaddleOCR mainly because ocrs is pure Rust: there are no native
+libraries to install or ship on Windows, and it runs on the same runtime
+(rten) as the embedding model.
 
 | | |
 | --- | --- |

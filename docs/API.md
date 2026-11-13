@@ -10,6 +10,9 @@ tables, model internals or Rust types.
 | Frontend calls | `src/lib/api/tauri.ts` (real backend), `src/lib/api/mock.ts` (development mock) |
 | Backend (Rust) | `src-tauri/src/commands/` — one `#[tauri::command]` per operation, registered in `src-tauri/src/lib.rs` |
 
+[DEVELOPMENT.md](DEVELOPMENT.md#how-the-frontend-and-backend-talk) walks
+through adding a new command.
+
 **Rule:** a change to a command's arguments or result must update both
 `types.ts` and the Rust DTO (they mirror each other, field for field), plus
 `mock.ts` and this file. Field names are `camelCase` in JSON (Rust uses
