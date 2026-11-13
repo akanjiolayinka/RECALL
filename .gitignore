@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Rust build output (src-tauri/.gitignore also covers this)
+target/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -23,10 +26,10 @@ dist-ssr
 *.sln
 *.sw?
 
-# Environment files (may contain secrets). .env.mock only toggles dev mock mode.
+# Environment files. Recall needs none; if you make one for your own
+# tooling it stays on your machine.
 .env
 .env.*
-!.env.mock
 
 # Local AI model files (downloaded by a setup script, never committed)
 models/

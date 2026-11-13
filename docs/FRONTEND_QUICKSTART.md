@@ -39,7 +39,7 @@ reads "Mock mode — showing fake development data". Click **Library → Add
 folder** to get mock files, then search for "budget" or "lease".
 
 Mock mode exists only in development. It turns on only when Vite runs in
-dev mode **and** `VITE_RECALL_MOCK=true` (set in `.env.mock`); production
+dev mode **and** in "mock" mode (`vite --mode mock`); production
 builds strip it out entirely.
 
 To run the real desktop app instead (needs Rust and the Tauri prerequisites,
